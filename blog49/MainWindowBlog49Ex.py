@@ -7,10 +7,10 @@ from PyQt6.QtWidgets import QTableWidgetItem, QFileDialog, QMessageBox
 from blog49.MainUiBlog49 import Ui_MainWindow
 
 
-class MainWindowBlog49Ex(Ui_MainWindow):
+class MainWindowEx(Ui_MainWindow):
     def __init__(self):
         super().__init__()
-        self.default_avatar="images/images.png"
+        self.default_avatar="images"
         self.id = None
         self.code = None
         self.name = None
@@ -26,18 +26,14 @@ class MainWindowBlog49Ex(Ui_MainWindow):
         self.pushButtoninsert.clicked.connect(self.processInsert)
         self.pushButtonupdate.clicked.connect(self.processUpdate)
         self.pushButtonremove.clicked.connect(self.processRemove)
-        try:
-            self.labelavatar.setPixmap(QPixmap(self.default_avatar))
-        except Exception:
-            pass
     def show(self):
         self.MainWindow.show()
     def connectMySQL(self):
-        server = 'localhost'
+        server = "localhost"
         port = 3306
-        database = 'studentmanagement'
+        database = "studentmanagement"
         username = "root"
-        password = "123456789"
+        password = "@Obama123"
 
         self.conn = mysql.connector.connect(
             host=server,
@@ -51,11 +47,11 @@ class MainWindowBlog49Ex(Ui_MainWindow):
         sql = "select * from student"
         cursor.execute(sql)
         dataset = cursor.fetchall()
-        self.tableWidgetstudents.setRowCount(0)
+        self.tableWidgetStudent.setRowCount(0)
         row=0
         for item in dataset:
-            row = self.tableWidgetstudents.rowCount()
-            self.tableWidgetstudents.insertRow(row)
+            row = self.tableWidgetStudent.rowCount()
+            self.tableWidgetStudent.insertRow(row)
 
             self.id = item[0]
             self.code = item[1]
@@ -64,19 +60,19 @@ class MainWindowBlog49Ex(Ui_MainWindow):
             self.avatar = item[4]
             self.intro = item[5]
 
-            self.tableWidgetstudents.setItem(row, 0, QTableWidgetItem(str(self.id)))
-            self.tableWidgetstudents.setItem(row, 1, QTableWidgetItem(self.code))
-            self.tableWidgetstudents.setItem(row, 2, QTableWidgetItem(self.name))
-            self.tableWidgetstudents.setItem(row, 3, QTableWidgetItem(str(self.age)))
+            self.tableWidgetStudent.setItem(row, 0, QTableWidgetItem(str(self.id)))
+            self.tableWidgetStudent.setItem(row, 1, QTableWidgetItem(self.code))
+            self.tableWidgetStudent.setItem(row, 2, QTableWidgetItem(self.name))
+            self.tableWidgetStudent.setItem(row, 3, QTableWidgetItem(str(self.age)))
 
         cursor.close()
 
     def processItemSelection(self):
-        row=self.tableWidgetstudents.currentRow()
+        row=self.tableWidgetStudent.currentRow()
         if row ==-1:
             return
         try:
-            code = self.tableWidgetstudents.item(row, 1).text()
+            code = self.tableWidgetStudent.item(row, 1).text()
             cursor = self.conn.cursor()
             # query all students
             sql = "select * from student where code=%s"
@@ -90,21 +86,21 @@ class MainWindowBlog49Ex(Ui_MainWindow):
                 self.age = item[3]
                 self.avatar = item[4]
                 self.intro = item[5]
-                self.lineEditid.setText(str(self.id))
-                self.lineEditcode.setText(self.code)
-                self.lineEditname.setText(self.name)
-                self.lineEditage.setText(str(self.age))
-                self.lineEditintro.setText(self.intro)
+                self.lineEditId.setText(str(self.id))
+                self.lineEditCode.setText(self.code)
+                self.lineEditName.setText(self.name)
+                self.lineEditAge.setText(str(self.age))
+                self.lineEditIntro.setText(self.intro)
                 # self.labelAvatar.setPixmap(None)
                 if self.avatar != None:
                     imgdata = base64.b64decode(self.avatar)
                     pixmap = QPixmap()
                     pixmap.loadFromData(imgdata)
-                    self.labelavatar.setPixmap(pixmap)
+                    self.labelAvatar.setPixmap(pixmap)
                 else:
-                    pixmap = QPixmap("images/images.png")
+                    pixmap = QPixmap("images/ic_no_avatar.png")
 
-                    self.labelavatar.setPixmap(pixmap)
+                    self.labelAvatar.setPixmap(pixmap)
             else:
                 print("Not Found")
             cursor.close()
@@ -112,7 +108,7 @@ class MainWindowBlog49Ex(Ui_MainWindow):
             traceback.print_exc()
 
     def pickAvatar(self):
-        filters = "Picture PNG (*.png);;All files (*)"
+        filters = "Picture PNG (*.png);;All files(*)"
         filename, selected_filter = QFileDialog.getOpenFileName(
             self.MainWindow,
             filter=filters,
@@ -120,7 +116,7 @@ class MainWindowBlog49Ex(Ui_MainWindow):
         if filename=='':
             return
         pixmap = QPixmap(filename)
-        self.labelavatar.setPixmap(pixmap)
+        self.labelAvatar.setPixmap(pixmap)
 
         with open(filename, "rb") as image_file:
             self.avatar = base64.b64encode(image_file.read())
@@ -129,40 +125,45 @@ class MainWindowBlog49Ex(Ui_MainWindow):
     def removeAvatar(self):
         self.avatar=None
         pixmap = QPixmap(self.default_avatar)
-        self.labelavatar.setPixmap(pixmap)
+        self.labelAvatar.setPixmap(pixmap)
     def processInsert(self):
+        try:
+            cursor = self.conn.cursor()
+            # query all students
+            sql = "insert into student(Code,Name,Age,Avatar,Intro) values(%s,%s,%s,%s,%s)"
 
-            try:
-                cursor = self.conn.cursor()
-                sql = "insert into student(Code,Name,Age,Avatar,Intro) values(%s,%s,%s,%s,%s)"
+            self.code = self.lineEditCode.text()
+            self.name = self.lineEditName.text()
+            self.age = int(self.lineEditAge.text())
+            if not hasattr(self, 'avatar'):
+                avatar = None
+            intro = self.lineEditIntro.text()
+            val = (self.code, self.name, self.age, self.avatar, self.intro)
 
-                code = self.lineEditcode.text()
-                name = self.lineEditname.text()
-                age = int(self.lineEditage.text())
-                intro = self.lineEditintro.text() or None  # <-- dùng biến cục bộ
+            cursor.execute(sql, val)
 
-                val = (code, name, age, self.avatar, intro)  # <-- truyền đúng
-                cursor.execute(sql, val)
-                self.conn.commit()
+            self.conn.commit()
 
-                self.lineEditid.setText(str(cursor.lastrowid))
-                cursor.close()
-                self.selectAllStudent()
-            except:
-                traceback.print_exc()
+            print(cursor.rowcount, " record inserted")
+            self.lineEditId.setText(str(cursor.lastrowid))
+
+            cursor.close()
+            self.selectAllStudent()
+        except:
+            traceback.print_exc()
 
     def processUpdate(self):
         cursor = self.conn.cursor()
         # query all students
         sql = "update student set Code=%s,Name=%s,Age=%s,Avatar=%s,Intro=%s" \
               " where Id=%s"
-        self.id=int(self.lineEditid.text())
-        self.code = self.lineEditcode.text()
-        self.name = self.lineEditname.text()
-        self.age = int(self.lineEditage.text())
+        self.id=int(self.lineEditId.text())
+        self.code = self.lineEditCode.text()
+        self.name = self.lineEditName.text()
+        self.age = int(self.lineEditAge.text())
         if not hasattr(self, 'avatar'):
             self.avatar = None
-        self.intro = self.lineEditintro.text()
+        self.intro = self.lineEditIntro.text()
 
         val = (self.code,self.name,self.age,self.avatar ,self.intro,self.id )
 
@@ -188,7 +189,7 @@ class MainWindowBlog49Ex(Ui_MainWindow):
         sql = "delete from student "\
               " where Id=%s"
 
-        val = (self.lineEditid.text(),)
+        val = (self.lineEditId.text(),)
 
         cursor.execute(sql, val)
 
@@ -206,4 +207,3 @@ class MainWindowBlog49Ex(Ui_MainWindow):
         self.lineEditage.setText("")
         self.lineEditintro.setText("")
         self.avatar=None
-

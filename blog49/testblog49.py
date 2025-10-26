@@ -1,9 +1,9 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow
 
-from blog49.MainWindowBlog49Ex import MainWindowBlog49Ex
+from blog49.MainWindowBlog49Ex import MainWindowEx
 
 app=QApplication([])
-myWindow=MainWindowBlog49Ex()
+myWindow=MainWindowEx()
 myWindow.setupUi(QMainWindow())
 myWindow.connectMySQL()
 myWindow.selectAllStudent()
