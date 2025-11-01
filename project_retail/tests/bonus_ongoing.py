@@ -328,7 +328,7 @@ def displayCustomersByClusterWeb(df_with_clusters, conn, cluster_count, output_f
 </head>
 <body>
     <div class="header">
-        <h1>🎯 Customer Clustering Analysis Report</h1>
+        <h1>Customer Clustering Analysis Report</h1>
         <div class="button-container">
 """
 
@@ -350,7 +350,7 @@ def displayCustomersByClusterWeb(df_with_clusters, conn, cluster_count, output_f
 
         html_content += f'        <div class="cluster-section" id="cluster-{cluster_id}">\n'
         html_content += f'            <div class="cluster-header">\n'
-        html_content += f'                <h2>📊 Cluster {cluster_id + 1} - Total Customers: {len(customer_ids)}</h2>\n'
+        html_content += f'                <h2>Cluster {cluster_id + 1} - Total Customers: {len(customer_ids)}</h2>\n'
         html_content += '            </div>\n'
 
         if len(customer_ids) > 0:
@@ -375,12 +375,12 @@ def displayCustomersByClusterWeb(df_with_clusters, conn, cluster_count, output_f
 
             # Add statistics
             html_content += '            <div class="stats">\n'
-            html_content += '                <h3>📈 Cluster Statistics:</h3>\n'
-            html_content += f'                <div class="stats-item">👤 Average Age: {cluster_customers["Age"].mean():.2f}</div>\n'
+            html_content += '                <h3>Cluster Statistics:</h3>\n'
+            html_content += f'                <div class="stats-item"> Average Age: {cluster_customers["Age"].mean():.2f}</div>\n'
             if 'Annual_Income' in cluster_customers.columns:
-                html_content += f'                <div class="stats-item">💰 Average Annual Income: ${cluster_customers["Annual_Income"].mean():.2f}</div>\n'
+                html_content += f'                <div class="stats-item">Average Annual Income: ${cluster_customers["Annual_Income"].mean():.2f}</div>\n'
             if 'Spending_Score' in cluster_customers.columns:
-                html_content += f'                <div class="stats-item">🛒 Average Spending Score: {cluster_customers["Spending_Score"].mean():.2f}</div>\n'
+                html_content += f'                <div class="stats-item"> Average Spending Score: {cluster_customers["Spending_Score"].mean():.2f}</div>\n'
             html_content += '            </div>\n'
         else:
             html_content += '            <p>No customers in this cluster.</p>\n'
@@ -400,9 +400,9 @@ def displayCustomersByClusterWeb(df_with_clusters, conn, cluster_count, output_f
     abs_path = os.path.abspath(output_file)
 
     print(f"\n{'=' * 80}")
-    print(f"✅ HTML report generated successfully!")
-    print(f"📁 Location: {abs_path}")
-    print(f"🌐 Opening in browser...")
+    print(f" HTML report generated successfully!")
+    print(f" Location: {abs_path}")
+    print(f" Opening in browser...")
     print(f"{'=' * 80}\n")
 
     # Try to open in browser
@@ -412,7 +412,7 @@ def displayCustomersByClusterWeb(df_with_clusters, conn, cluster_count, output_f
         try:
             webbrowser.open_new_tab(abs_path)
         except:
-            print(f"⚠️ Could not auto-open browser. Please manually open: {abs_path}")
+            print(f" Could not auto-open browser. Please manually open: {abs_path}")
 
 
 # ============================================================================
@@ -494,7 +494,7 @@ displayCustomersByClusterWeb(df2, conn, cluster, "clusters_3d_all_features.html"
 print("\n" + "=" * 80)
 print("✨ ALL SCENARIOS COMPLETED!")
 print("=" * 80)
-print("📊 Three HTML reports have been generated:")
+print("Three HTML reports have been generated:")
 print("   1. clusters_age_spending.html")
 print("   2. clusters_income_spending.html")
 print("   3. clusters_3d_all_features.html")
