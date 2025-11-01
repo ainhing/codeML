@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Customer Clustering Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        h1 {
+            margin: 0;
+            padding-bottom: 15px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px 0;
+        }
+        .cluster-btn {
+            background-color: white;
+            color: #4CAF50;
+            border: 2px solid white;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .cluster-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            background-color: #f1f1f1;
+        }
+        .cluster-btn.active {
+            background-color: #2196F3;
+            color: white;
+            border-color: #2196F3;
+        }
+        .show-all-btn {
+            background-color: #FF9800;
+            color: white;
+        }
+        .show-all-btn:hover {
+            background-color: #F57C00;
+        }
+        .content-container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .cluster-section {
+            display: none;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            animation: fadeIn 0.5s;
+        }
+        .cluster-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .cluster-header {
+            background-color: #2196F3;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            position: sticky;
+            top: 120px;
+            z-index: 10;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #e8f5e9;
+        }
+        .stats {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .stats h3 {
+            margin-top: 0;
+            color: #1976D2;
+        }
+        .stats-item {
+            display: inline-block;
+            margin-right: 30px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #1976D2;
+            font-size: 16px;
+        }
+    </style>
+    <script>
+        function showCluster(clusterNum) {
+            var sections = document.getElementsByClassName('cluster-section');
+            for (var i = 0; i < sections.length; i++) {
+                sections[i].classList.remove('active');
+            }
+
+            var buttons = document.getElementsByClassName('cluster-btn');
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove('active');
+            }
+
+            if (clusterNum === 'all') {
+                for (var i = 0; i < sections.length; i++) {
+                    sections[i].classList.add('active');
+                }
+                document.getElementById('btn-all').classList.add('active');
+            } else {
+                document.getElementById('cluster-' + clusterNum).classList.add('active');
+                document.getElementById('btn-' + clusterNum).classList.add('active');
+            }
+
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        window.onload = function() {
+            showCluster(0);
+        };
+    </script>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 Customer Clustering Analysis Report</h1>
+        <div class="button-container">
+            <button class="cluster-btn" id="btn-0" onclick="showCluster(0)">Cluster 1</button>
+            <button class="cluster-btn" id="btn-1" onclick="showCluster(1)">Cluster 2</button>
+            <button class="cluster-btn" id="btn-2" onclick="showCluster(2)">Cluster 3</button>
+            <button class="cluster-btn" id="btn-3" onclick="showCluster(3)">Cluster 4</button>
+            <button class="cluster-btn" id="btn-4" onclick="showCluster(4)">Cluster 5</button>
+            <button class="cluster-btn show-all-btn" id="btn-all" onclick="showCluster('all')">📋 Show All</button>
+        </div>
+    </div>
+    <div class="content-container">
+        <div class="cluster-section" id="cluster-0">
+            <div class="cluster-header">
+                <h2>📊 Cluster 1 - Total Customers: 47</h2>
+            </div>
+            <table>
+                <tr><th>Id</th><th>CustomerID</th><th>Name</th><th>Gender</th><th>Age</th></tr>
+                <tr><td>41</td><td>41</td><td>Nguyễn văn toản</td><td>Female</td><td>65</td></tr>
+                <tr><td>43</td><td>43</td><td>congluan99</td><td>Male</td><td>48</td></tr>
+                <tr><td>47</td><td>47</td><td>Nhã Kỳ</td><td>Female</td><td>50</td></tr>
+                <tr><td>51</td><td>51</td><td>hoang05081990</td><td>Female</td><td>49</td></tr>
+                <tr><td>54</td><td>54</td><td>maibach66</td><td>Male</td><td>59</td></tr>
+                <tr><td>55</td><td>55</td><td>triệu quang vũ</td><td>Female</td><td>50</td></tr>
+                <tr><td>56</td><td>56</td><td>ân lê hồng</td><td>Male</td><td>47</td></tr>
+                <tr><td>57</td><td>57</td><td>Nguyễn Trai</td><td>Female</td><td>51</td></tr>
+                <tr><td>58</td><td>58</td><td>Trai Làng</td><td>Male</td><td>69</td></tr>
+                <tr><td>60</td><td>60</td><td>Ngọc Viettel Cáp Quang 0981116444</td><td>Male</td><td>53</td></tr>
+                <tr><td>61</td><td>61</td><td>Giang Lee</td><td>Male</td><td>70</td></tr>
+                <tr><td>63</td><td>63</td><td>hovy1995.nghean</td><td>Female</td><td>67</td></tr>
+                <tr><td>64</td><td>64</td><td>pe_tocngan91</td><td>Female</td><td>54</td></tr>
+                <tr><td>65</td><td>65</td><td>Nha Ky</td><td>Male</td><td>63</td></tr>
+                <tr><td>67</td><td>67</td><td>daohaidang07</td><td>Female</td><td>43</td></tr>
+                <tr><td>68</td><td>68</td><td>Linh Phuong</td><td>Female</td><td>68</td></tr>
+                <tr><td>71</td><td>71</td><td>gold170990</td><td>Male</td><td>70</td></tr>
+                <tr><td>72</td><td>72</td><td>Ductho103</td><td>Female</td><td>47</td></tr>
+                <tr><td>73</td><td>73</td><td>Hung Ton</td><td>Female</td><td>60</td></tr>
+                <tr><td>74</td><td>74</td><td>trannhiqt66</td><td>Female</td><td>60</td></tr>
+                <tr><td>75</td><td>75</td><td>Hong Kdoh</td><td>Male</td><td>59</td></tr>
+                <tr><td>77</td><td>77</td><td>phuotngao</td><td>Female</td><td>45</td></tr>
+                <tr><td>80</td><td>80</td><td>BonBon MyMy</td><td>Female</td><td>49</td></tr>
+                <tr><td>81</td><td>81</td><td>phuhai</td><td>Male</td><td>57</td></tr>
+                <tr><td>83</td><td>83</td><td>Văn sỹ</td><td>Male</td><td>67</td></tr>
+                <tr><td>84</td><td>84</td><td>Nam Lu</td><td>Female</td><td>46</td></tr>
+                <tr><td>86</td><td>86</td><td>tedicovn@gmail.com</td><td>Male</td><td>48</td></tr>
+                <tr><td>87</td><td>87</td><td>Lang Tu Mien Tay</td><td>Female</td><td>55</td></tr>
+                <tr><td>90</td><td>90</td><td>khanhthanhanh</td><td>Female</td><td>50</td></tr>
+                <tr><td>91</td><td>91</td><td>Lientan160891</td><td>Female</td><td>68</td></tr>
+                <tr><td>93</td><td>93</td><td>Hồ Việt Văn</td><td>Male</td><td>48</td></tr>
+                <tr><td>97</td><td>97</td><td>văng782</td><td>Female</td><td>47</td></tr>
+                <tr><td>99</td><td>99</td><td>limichi9999</td><td>Male</td><td>48</td></tr>
+                <tr><td>102</td><td>102</td><td>Sonhaudau</td><td>Female</td><td>49</td></tr>
+                <tr><td>103</td><td>103</td><td>vòng a vĩnh</td><td>Male</td><td>67</td></tr>
+                <tr><td>105</td><td>105</td><td>Kaoru4ever2000</td><td>Male</td><td>49</td></tr>
+                <tr><td>107</td><td>107</td><td>Cố Quên Một Người</td><td>Female</td><td>66</td></tr>
+                <tr><td>108</td><td>108</td><td>hahgha</td><td>Male</td><td>54</td></tr>
+                <tr><td>109</td><td>109</td><td>HOANG-MT</td><td>Male</td><td>68</td></tr>
+                <tr><td>110</td><td>110</td><td>datphamshop</td><td>Male</td><td>66</td></tr>
+                <tr><td>111</td><td>111</td><td>nguyễn ngọc hội</td><td>Male</td><td>65</td></tr>
+                <tr><td>117</td><td>117</td><td>zuonghoi</td><td>Female</td><td>63</td></tr>
+                <tr><td>118</td><td>118</td><td>cần một ngôi nhà</td><td>Female</td><td>49</td></tr>
+                <tr><td>119</td><td>119</td><td>gaduaxe</td><td>Female</td><td>51</td></tr>
+                <tr><td>120</td><td>120</td><td>thailanfiditour</td><td>Female</td><td>50</td></tr>
+                <tr><td>147</td><td>147</td><td>nguyendinhsơn</td><td>Male</td><td>48</td></tr>
+                <tr><td>161</td><td>161</td><td>Minhkhang2015</td><td>Female</td><td>56</td></tr>
+            </table>
+            <div class="stats">
+                <h3>📈 Cluster Statistics:</h3>
+                <div class="stats-item">👤 Average Age: 55.98</div>
+                <div class="stats-item">💰 Average Annual Income: $54.43</div>
+                <div class="stats-item">🛒 Average Spending Score: 48.51</div>
+            </div>
+        </div>
+        <div class="cluster-section" id="cluster-1">
+            <div class="cluster-header">
+                <h2>📊 Cluster 2 - Total Customers: 38</h2>
+            </div>
+            <table>
+                <tr><th>Id</th><th>CustomerID</th><th>Name</th><th>Gender</th><th>Age</th></tr>
+                <tr><td>2</td><td>2</td><td>pinknguyen</td><td>Male</td><td>21</td></tr>
+                <tr><td>4</td><td>4</td><td>Nguyễn Văn Toàn</td><td>Female</td><td>23</td></tr>
+                <tr><td>6</td><td>6</td><td>Kaio Nguyễn Hoàng</td><td>Female</td><td>22</td></tr>
+                <tr><td>10</td><td>10</td><td>phuc05vietnam</td><td>Female</td><td>30</td></tr>
+                <tr><td>14</td><td>14</td><td>Quang Đạo Đồng</td><td>Female</td><td>24</td></tr>
+                <tr><td>16</td><td>16</td><td>Thành Luân Trần</td><td>Male</td><td>22</td></tr>
+                <tr><td>18</td><td>18</td><td>Kim Trang Tran Thi</td><td>Male</td><td>20</td></tr>
+                <tr><td>22</td><td>22</td><td>Hồ Đồ</td><td>Male</td><td>25</td></tr>
+                <tr><td>24</td><td>24</td><td>Hoat Tran</td><td>Male</td><td>31</td></tr>
+                <tr><td>28</td><td>28</td><td>Teo tèo</td><td>Male</td><td>35</td></tr>
+                <tr><td>32</td><td>32</td><td>nhattaidnp</td><td>Female</td><td>21</td></tr>
+                <tr><td>36</td><td>36</td><td>ly son</td><td>Female</td><td>21</td></tr>
+                <tr><td>38</td><td>38</td><td>thinhpdfit</td><td>Female</td><td>30</td></tr>
+                <tr><td>40</td><td>40</td><td>Nguyen Van Toan</td><td>Female</td><td>20</td></tr>
+                <tr><td>44</td><td>44</td><td>Nakamichivn</td><td>Female</td><td>31</td></tr>
+                <tr><td>46</td><td>46</td><td>Lê Tấn Thắng</td><td>Female</td><td>24</td></tr>
+                <tr><td>52</td><td>52</td><td>Ice Tea</td><td>Male</td><td>33</td></tr>
+                <tr><td>66</td><td>66</td><td>Trà Giang Nguyễn</td><td>Male</td><td>18</td></tr>
+                <tr><td>69</td><td>69</td><td>cafelamson</td><td>Male</td><td>19</td></tr>
+                <tr><td>89</td><td>89</td><td>nguyencongtri</td><td>Female</td><td>34</td></tr>
+                <tr><td>126</td><td>126</td><td>Nharatngheodq</td><td>Female</td><td>31</td></tr>
+                <tr><td>130</td><td>130</td><td>ngoquangtrung.haui</td><td>Male</td><td>38</td></tr>
+                <tr><td>132</td><td>132</td><td>tranvuhai2005</td><td>Male</td><td>39</td></tr>
+                <tr><td>134</td><td>134</td><td>phạm chí dũng</td><td>Female</td><td>31</td></tr>
+                <tr><td>138</td><td>138</td><td>công vũ</td><td>Male</td><td>32</td></tr>
+                <tr><td>140</td><td>140</td><td>tyty281207</td><td>Female</td><td>35</td></tr>
+                <tr><td>148</td><td>148</td><td>Tran hung</td><td>Female</td><td>32</td></tr>
+                <tr><td>154</td><td>154</td><td>lahanqua</td><td>Female</td><td>38</td></tr>
+                <tr><td>158</td><td>158</td><td>Ths.Kts Phạm Thanh Truyền</td><td>Female</td><td>30</td></tr>
+                <tr><td>160</td><td>160</td><td>Happy day</td><td>Female</td><td>30</td></tr>
+                <tr><td>166</td><td>166</td><td>phanminhnhat</td><td>Female</td><td>36</td></tr>
+                <tr><td>170</td><td>170</td><td>toilatoi1</td><td>Male</td><td>32</td></tr>
+                <tr><td>172</td><td>172</td><td>ThuýAnh</td><td>Male</td><td>28</td></tr>
+                <tr><td>178</td><td>178</td><td>Mr. EG</td><td>Male</td><td>27</td></tr>
+                <tr><td>188</td><td>188</td><td>chauphu902gmail.com</td><td>Male</td><td>28</td></tr>
+                <tr><td>192</td><td>192</td><td>khfdmnj2367</td><td>Female</td><td>32</td></tr>
+                <tr><td>196</td><td>196</td><td>Cytheria Tran</td><td>Female</td><td>35</td></tr>
+                <tr><td>198</td><td>198</td><td>vohoan2408</td><td>Male</td><td>32</td></tr>
+            </table>
+            <div class="stats">
+                <h3>📈 Cluster Statistics:</h3>
+                <div class="stats-item">👤 Average Age: 28.68</div>
+                <div class="stats-item">💰 Average Annual Income: $56.63</div>
+                <div class="stats-item">🛒 Average Spending Score: 71.50</div>
+            </div>
+        </div>
+        <div class="cluster-section" id="cluster-2">
+            <div class="cluster-header">
+                <h2>📊 Cluster 3 - Total Customers: 47</h2>
+            </div>
+            <table>
+                <tr><th>Id</th><th>CustomerID</th><th>Name</th><th>Gender</th><th>Age</th></tr>
+                <tr><td>3</td><td>3</td><td>Lê Đảm</td><td>Female</td><td>20</td></tr>
+                <tr><td>7</td><td>7</td><td>quynhtp.cd</td><td>Female</td><td>35</td></tr>
+                <tr><td>9</td><td>9</td><td>dinh dang</td><td>Male</td><td>64</td></tr>
+                <tr><td>11</td><td>11</td><td>vuongtai</td><td>Male</td><td>67</td></tr>
+                <tr><td>13</td><td>13</td><td>hiepmts</td><td>Female</td><td>58</td></tr>
+                <tr><td>15</td><td>15</td><td>PHẠM QUỐC TUẤN</td><td>Male</td><td>37</td></tr>
+                <tr><td>19</td><td>19</td><td>Tuyết mùa hạ</td><td>Male</td><td>52</td></tr>
+                <tr><td>23</td><td>23</td><td>Bich tiên</td><td>Female</td><td>46</td></tr>
+                <tr><td>25</td><td>25</td><td>Đinh Đằng</td><td>Female</td><td>54</td></tr>
+                <tr><td>27</td><td>27</td><td>pha lê tiu</td><td>Female</td><td>45</td></tr>
+                <tr><td>29</td><td>29</td><td>Đinh Đáng</td><td>Female</td><td>40</td></tr>
+                <tr><td>31</td><td>31</td><td>Ty ty</td><td>Male</td><td>60</td></tr>
+                <tr><td>33</td><td>33</td><td>meodethuongqn</td><td>Male</td><td>53</td></tr>
+                <tr><td>35</td><td>35</td><td>Huynh_lg</td><td>Female</td><td>49</td></tr>
+                <tr><td>37</td><td>37</td><td>xuka_jp</td><td>Female</td><td>42</td></tr>
+                <tr><td>39</td><td>39</td><td>Đinh Đang</td><td>Female</td><td>36</td></tr>
+                <tr><td>45</td><td>45</td><td>dinhtd</td><td>Female</td><td>49</td></tr>
+                <tr><td>129</td><td>129</td><td>Minh Huy Ho</td><td>Male</td><td>59</td></tr>
+                <tr><td>131</td><td>131</td><td>hoanho23.1</td><td>Male</td><td>47</td></tr>
+                <tr><td>135</td><td>135</td><td>lenguyenccts</td><td>Male</td><td>20</td></tr>
+                <tr><td>137</td><td>137</td><td>Tran Duy Khiem</td><td>Female</td><td>44</td></tr>
+                <tr><td>139</td><td>139</td><td>lnndgk</td><td>Male</td><td>19</td></tr>
+                <tr><td>141</td><td>141</td><td>Thạch LD</td><td>Female</td><td>57</td></tr>
+                <tr><td>145</td><td>145</td><td>Trần Hùng</td><td>Male</td><td>25</td></tr>
+                <tr><td>149</td><td>149</td><td>dung do thanh</td><td>Female</td><td>34</td></tr>
+                <tr><td>151</td><td>151</td><td>banjvancan007</td><td>Male</td><td>43</td></tr>
+                <tr><td>153</td><td>153</td><td>Nhat HD</td><td>Female</td><td>44</td></tr>
+                <tr><td>155</td><td>155</td><td>Thư Trương</td><td>Female</td><td>47</td></tr>
+                <tr><td>157</td><td>157</td><td>LETHINHULAN.BVBR</td><td>Male</td><td>37</td></tr>
+                <tr><td>159</td><td>159</td><td>ngmthang</td><td>Male</td><td>34</td></tr>
+                <tr><td>163</td><td>163</td><td>nguyenbang12</td><td>Male</td><td>19</td></tr>
+                <tr><td>165</td><td>165</td><td>Trunghovan861</td><td>Male</td><td>50</td></tr>
+                <tr><td>167</td><td>167</td><td>hinsky.huy</td><td>Male</td><td>42</td></tr>
+                <tr><td>169</td><td>169</td><td>Ly Thai</td><td>Female</td><td>36</td></tr>
+                <tr><td>171</td><td>171</td><td>xuan quyet vu</td><td>Male</td><td>40</td></tr>
+                <tr><td>173</td><td>173</td><td>tranvanhoa10061966</td><td>Male</td><td>36</td></tr>
+                <tr><td>175</td><td>175</td><td>Thu Truong</td><td>Female</td><td>52</td></tr>
+                <tr><td>177</td><td>177</td><td>trân hùng</td><td>Male</td><td>58</td></tr>
+                <tr><td>179</td><td>179</td><td>danviet1946</td><td>Male</td><td>59</td></tr>
+                <tr><td>183</td><td>183</td><td>vanchung.cao</td><td>Male</td><td>46</td></tr>
+                <tr><td>187</td><td>187</td><td>Đức Luân</td><td>Female</td><td>54</td></tr>
+                <tr><td>189</td><td>189</td><td>XE DAP</td><td>Female</td><td>41</td></tr>
+                <tr><td>191</td><td>191</td><td>Bảo Net</td><td>Female</td><td>34</td></tr>
+                <tr><td>193</td><td>193</td><td>Phan Xuân Tĩnh</td><td>Male</td><td>33</td></tr>
+                <tr><td>195</td><td>195</td><td>Nguyễn Tin</td><td>Female</td><td>47</td></tr>
+                <tr><td>197</td><td>197</td><td>truongbo37</td><td>Female</td><td>45</td></tr>
+                <tr><td>199</td><td>199</td><td>vinhdq.vn</td><td>Male</td><td>32</td></tr>
+            </table>
+            <div class="stats">
+                <h3>📈 Cluster Statistics:</h3>
+                <div class="stats-item">👤 Average Age: 43.43</div>
+                <div class="stats-item">💰 Average Annual Income: $66.30</div>
+                <div class="stats-item">🛒 Average Spending Score: 14.66</div>
+            </div>
+        </div>
+        <div class="cluster-section" id="cluster-3">
+            <div class="cluster-header">
+                <h2>📊 Cluster 4 - Total Customers: 40</h2>
+            </div>
+            <table>
+                <tr><th>Id</th><th>CustomerID</th><th>Name</th><th>Gender</th><th>Age</th></tr>
+                <tr><td>1</td><td>1</td><td>lee Mean</td><td>Male</td><td>19</td></tr>
+                <tr><td>5</td><td>5</td><td>Trốc Gúi</td><td>Female</td><td>31</td></tr>
+                <tr><td>17</td><td>17</td><td>Võ Nguyễn Thanh Loan</td><td>Female</td><td>35</td></tr>
+                <tr><td>21</td><td>21</td><td>Nguyễn Vạn Toàn</td><td>Male</td><td>35</td></tr>
+                <tr><td>48</td><td>48</td><td>phu69sg</td><td>Female</td><td>27</td></tr>
+                <tr><td>49</td><td>49</td><td>Kiên Đào Trung</td><td>Female</td><td>29</td></tr>
+                <tr><td>50</td><td>50</td><td>hieuduong84</td><td>Female</td><td>31</td></tr>
+                <tr><td>53</td><td>53</td><td>kingofmine_88</td><td>Female</td><td>31</td></tr>
+                <tr><td>59</td><td>59</td><td>vau1vau2</td><td>Female</td><td>27</td></tr>
+                <tr><td>62</td><td>62</td><td>khanhnc.nps</td><td>Male</td><td>19</td></tr>
+                <tr><td>70</td><td>70</td><td>Hậu ACE</td><td>Female</td><td>32</td></tr>
+                <tr><td>76</td><td>76</td><td>caonhung</td><td>Male</td><td>26</td></tr>
+                <tr><td>78</td><td>78</td><td>toanbeo</td><td>Male</td><td>40</td></tr>
+                <tr><td>79</td><td>79</td><td>hnt1969</td><td>Female</td><td>23</td></tr>
+                <tr><td>82</td><td>82</td><td>ngochec13</td><td>Male</td><td>38</td></tr>
+                <tr><td>85</td><td>85</td><td>Phamhungviet1975</td><td>Female</td><td>21</td></tr>
+                <tr><td>88</td><td>88</td><td>Hoàng Mã Vui</td><td>Female</td><td>22</td></tr>
+                <tr><td>92</td><td>92</td><td>CNwanted .</td><td>Male</td><td>18</td></tr>
+                <tr><td>94</td><td>94</td><td>neverbackdown6789</td><td>Female</td><td>40</td></tr>
+                <tr><td>95</td><td>95</td><td>Ngô Minh Thuận</td><td>Female</td><td>32</td></tr>
+                <tr><td>96</td><td>96</td><td>Lamthu9286</td><td>Male</td><td>24</td></tr>
+                <tr><td>98</td><td>98</td><td>Nicepet2007</td><td>Female</td><td>27</td></tr>
+                <tr><td>100</td><td>100</td><td>Ngo Tung Minh</td><td>Male</td><td>20</td></tr>
+                <tr><td>101</td><td>101</td><td>Huutoan7426</td><td>Female</td><td>23</td></tr>
+                <tr><td>104</td><td>104</td><td>dinhthitho</td><td>Male</td><td>26</td></tr>
+                <tr><td>106</td><td>106</td><td>Ngọc Hà Trần</td><td>Female</td><td>21</td></tr>
+                <tr><td>112</td><td>112</td><td>dunggiaodich</td><td>Female</td><td>19</td></tr>
+                <tr><td>113</td><td>113</td><td>nguyenthanhdat1802</td><td>Female</td><td>38</td></tr>
+                <tr><td>114</td><td>114</td><td>manhtrung86</td><td>Male</td><td>19</td></tr>
+                <tr><td>115</td><td>115</td><td>Triton</td><td>Female</td><td>18</td></tr>
+                <tr><td>116</td><td>116</td><td>Thắng Hương</td><td>Female</td><td>19</td></tr>
+                <tr><td>121</td><td>121</td><td>Mạnh Phương</td><td>Male</td><td>27</td></tr>
+                <tr><td>122</td><td>122</td><td>trần duy khiêm</td><td>Female</td><td>38</td></tr>
+                <tr><td>123</td><td>123</td><td>Sac Viet </td><td>Female</td><td>40</td></tr>
+                <tr><td>125</td><td>125</td><td>hungchu1</td><td>Female</td><td>23</td></tr>
+                <tr><td>127</td><td>127</td><td>Phuongtd</td><td>Male</td><td>43</td></tr>
+                <tr><td>133</td><td>133</td><td>hungtn982 hoang</td><td>Female</td><td>25</td></tr>
+                <tr><td>143</td><td>143</td><td>quyenhotan</td><td>Female</td><td>28</td></tr>
+                <tr><td>181</td><td>181</td><td>No Seven</td><td>Female</td><td>37</td></tr>
+                <tr><td>185</td><td>185</td><td>CÔNG SƠN ĐINH</td><td>Female</td><td>41</td></tr>
+            </table>
+            <div class="stats">
+                <h3>📈 Cluster Statistics:</h3>
+                <div class="stats-item">👤 Average Age: 28.30</div>
+                <div class="stats-item">💰 Average Annual Income: $56.55</div>
+                <div class="stats-item">🛒 Average Spending Score: 45.58</div>
+            </div>
+        </div>
+        <div class="cluster-section" id="cluster-4">
+            <div class="cluster-header">
+                <h2>📊 Cluster 5 - Total Customers: 28</h2>
+            </div>
+            <table>
+                <tr><th>Id</th><th>CustomerID</th><th>Name</th><th>Gender</th><th>Age</th></tr>
+                <tr><td>8</td><td>8</td><td>jutjit</td><td>Female</td><td>23</td></tr>
+                <tr><td>12</td><td>12</td><td>datlee3010199</td><td>Female</td><td>35</td></tr>
+                <tr><td>20</td><td>20</td><td>phamthithuhuong402</td><td>Female</td><td>35</td></tr>
+                <tr><td>26</td><td>26</td><td>tanghongmong</td><td>Male</td><td>29</td></tr>
+                <tr><td>30</td><td>30</td><td>btuankhanh</td><td>Female</td><td>23</td></tr>
+                <tr><td>34</td><td>34</td><td>Phanbonhuuhai</td><td>Male</td><td>18</td></tr>
+                <tr><td>42</td><td>42</td><td>Tép Rô</td><td>Male</td><td>24</td></tr>
+                <tr><td>124</td><td>124</td><td>dinhdam_87</td><td>Male</td><td>39</td></tr>
+                <tr><td>128</td><td>128</td><td>Cong Vu</td><td>Male</td><td>40</td></tr>
+                <tr><td>136</td><td>136</td><td>Thiên Nam</td><td>Female</td><td>29</td></tr>
+                <tr><td>142</td><td>142</td><td>Bao Vo</td><td>Male</td><td>32</td></tr>
+                <tr><td>144</td><td>144</td><td>thuyanh</td><td>Female</td><td>32</td></tr>
+                <tr><td>146</td><td>146</td><td>trần hung</td><td>Male</td><td>28</td></tr>
+                <tr><td>150</td><td>150</td><td>Nhovehanoithu</td><td>Male</td><td>34</td></tr>
+                <tr><td>152</td><td>152</td><td>Mạnh Ninh</td><td>Male</td><td>39</td></tr>
+                <tr><td>156</td><td>156</td><td>ngohang62</td><td>Female</td><td>27</td></tr>
+                <tr><td>162</td><td>162</td><td>Mai Nha Hong</td><td>Female</td><td>29</td></tr>
+                <tr><td>164</td><td>164</td><td>Ðịch Tiến Ta Tui</td><td>Female</td><td>31</td></tr>
+                <tr><td>168</td><td>168</td><td>Linh phan nhat</td><td>Female</td><td>33</td></tr>
+                <tr><td>174</td><td>174</td><td>Trần Hưng</td><td>Male</td><td>36</td></tr>
+                <tr><td>176</td><td>176</td><td>Không Biết</td><td>Female</td><td>30</td></tr>
+                <tr><td>180</td><td>180</td><td>Vũ huy Đại</td><td>Male</td><td>35</td></tr>
+                <tr><td>182</td><td>182</td><td>Ngoc Cuong Duong</td><td>Female</td><td>32</td></tr>
+                <tr><td>184</td><td>184</td><td>Xe đạp</td><td>Female</td><td>29</td></tr>
+                <tr><td>186</td><td>186</td><td>dqdung57</td><td>Male</td><td>30</td></tr>
+                <tr><td>190</td><td>190</td><td>Kmacblad Trungpt</td><td>Female</td><td>36</td></tr>
+                <tr><td>194</td><td>194</td><td>duytien</td><td>Female</td><td>38</td></tr>
+                <tr><td>200</td><td>200</td><td>Nha6942</td><td>Male</td><td>30</td></tr>
+            </table>
+            <div class="stats">
+                <h3>📈 Cluster Statistics:</h3>
+                <div class="stats-item">👤 Average Age: 31.29</div>
+                <div class="stats-item">💰 Average Annual Income: $72.29</div>
+                <div class="stats-item">🛒 Average Spending Score: 90.39</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
