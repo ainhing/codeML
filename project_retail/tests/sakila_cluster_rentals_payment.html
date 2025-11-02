@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Sakila - Scenario 1: Total Rentals × Total Payment</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            margin-top: 10px;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .cluster-btn {
+            background-color: white;
+            color: #667eea;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .cluster-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+        .cluster-btn.active {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .show-all-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        .content-container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .cluster-section {
+            display: none;
+            margin: 20px 0;
+            padding: 30px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            animation: fadeIn 0.5s;
+        }
+        .cluster-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .cluster-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #e3f2fd;
+            transition: background-color 0.2s;
+        }
+        .stats {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .stats h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stats-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stats-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .stats-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+    <script>
+        function showCluster(clusterNum) {
+            var sections = document.getElementsByClassName('cluster-section');
+            for (var i = 0; i < sections.length; i++) {
+                sections[i].classList.remove('active');
+            }
+            var buttons = document.getElementsByClassName('cluster-btn');
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove('active');
+            }
+            if (clusterNum === 'all') {
+                for (var i = 0; i < sections.length; i++) {
+                    sections[i].classList.add('active');
+                }
+                document.getElementById('btn-all').classList.add('active');
+            } else {
+                document.getElementById('cluster-' + clusterNum).classList.add('active');
+                document.getElementById('btn-' + clusterNum).classList.add('active');
+            }
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+        window.onload = function() {
+            showCluster(0);
+        };
+    </script>
+</head>
+<body>
+    <div class="header">
+        <h1>🎬 Sakila Database Analysis</h1>
+        <div class="subtitle">Scenario 1: Total Rentals × Total Payment</div>
+        <div class="button-container">
+            <button class="cluster-btn" id="btn-0" onclick="showCluster(0)">Cluster 1</button>
+            <button class="cluster-btn" id="btn-1" onclick="showCluster(1)">Cluster 2</button>
+            <button class="cluster-btn" id="btn-2" onclick="showCluster(2)">Cluster 3</button>
+            <button class="cluster-btn" id="btn-3" onclick="showCluster(3)">Cluster 4</button>
+            <button class="cluster-btn" id="btn-4" onclick="showCluster(4)">Cluster 5</button>
+            <button class="cluster-btn show-all-btn" id="btn-all" onclick="showCluster('all')">📋 Show All</button>
+        </div>
+    </div>
+    <div class="content-container">
+        <div class="cluster-section" id="cluster-0">
+            <div class="cluster-header">
+                <h2>🎯 Cluster 1 - Total Customers: 187</h2>
+            </div>
+            <table>
+                <tr><th>Customer Id</th><th>First Name</th><th>Last Name</th><th>Email</th><th>Active</th><th>Address</th><th>City</th><th>Country</th></tr>
+                <tr><td>6</td><td>JENNIFER</td><td>DAVIS</td><td>JENNIFER.DAVIS@sakilacustomer.org</td><td>1</td><td>1795 Santiago de Compostela Way</td><td>Laredo</td><td>United States</td></tr>
+                <tr><td>8</td><td>SUSAN</td><td>WILSON</td><td>SUSAN.WILSON@sakilacustomer.org</td><td>1</td><td>478 Joliet Way</td><td>Hamilton</td><td>New Zealand</td></tr>
+                <tr><td>9</td><td>MARGARET</td><td>MOORE</td><td>MARGARET.MOORE@sakilacustomer.org</td><td>1</td><td>613 Korolev Drive</td><td>Masqat</td><td>Oman</td></tr>
+                <tr><td>10</td><td>DOROTHY</td><td>TAYLOR</td><td>DOROTHY.TAYLOR@sakilacustomer.org</td><td>1</td><td>1531 Sal Drive</td><td>Esfahan</td><td>Iran</td></tr>
+                <tr><td>11</td><td>LISA</td><td>ANDERSON</td><td>LISA.ANDERSON@sakilacustomer.org</td><td>1</td><td>1542 Tarlac Parkway</td><td>Sagamihara</td><td>Japan</td></tr>
+                <tr><td>12</td><td>NANCY</td><td>THOMAS</td><td>NANCY.THOMAS@sakilacustomer.org</td><td>1</td><td>808 Bhopal Manor</td><td>Yamuna Nagar</td><td>India</td></tr>
+                <tr><td>17</td><td>DONNA</td><td>THOMPSON</td><td>DONNA.THOMPSON@sakilacustomer.org</td><td>1</td><td>270 Toulon Boulevard</td><td>Elista</td><td>Russian Federation</td></tr>
+                <tr><td>18</td><td>CAROL</td><td>GARCIA</td><td>CAROL.GARCIA@sakilacustomer.org</td><td>1</td><td>320 Brest Avenue</td><td>Kaduna</td><td>Nigeria</td></tr>
+                <tr><td>24</td><td>KIMBERLY</td><td>LEE</td><td>KIMBERLY.LEE@sakilacustomer.org</td><td>1</td><td>96 Tafuna Way</td><td>Córdoba</td><td>Argentina</td></tr>
+                <tr><td>31</td><td>BRENDA</td><td>WRIGHT</td><td>BRENDA.WRIGHT@sakilacustomer.org</td><td>1</td><td>33 Gorontalo Way</td><td>Kamarhati</td><td>India</td></tr>
+                <tr><td>33</td><td>ANNA</td><td>HILL</td><td>ANNA.HILL@sakilacustomer.org</td><td>1</td><td>127 Purnea (Purnia) Manor</td><td>Alessandria</td><td>Italy</td></tr>
+                <tr><td>34</td><td>REBECCA</td><td>SCOTT</td><td>REBECCA.SCOTT@sakilacustomer.org</td><td>1</td><td>61 Tama Street</td><td>Kurashiki</td><td>Japan</td></tr>
+                <tr><td>36</td><td>KATHLEEN</td><td>ADAMS</td><td>KATHLEEN.ADAMS@sakilacustomer.org</td><td>1</td><td>334 Munger (Monghyr) Lane</td><td>Arak</td><td>Iran</td></tr>
+                <tr><td>37</td><td>PAMELA</td><td>BAKER</td><td>PAMELA.BAKER@sakilacustomer.org</td><td>1</td><td>1440 Fukuyama Loop</td><td>Nanyang</td><td>China</td></tr>
+                <tr><td>43</td><td>CHRISTINE</td><td>ROBERTS</td><td>CHRISTINE.ROBERTS@sakilacustomer.org</td><td>1</td><td>1447 Imus Way</td><td>Faaa</td><td>French Polynesia</td></tr>
+                <tr><td>55</td><td>DORIS</td><td>REED</td><td>DORIS.REED@sakilacustomer.org</td><td>1</td><td>1697 Kowloon and New Kowloon Loop</td><td>Balašiha</td><td>Russian Federation</td></tr>
+                <tr><td>60</td><td>MILDRED</td><td>BAILEY</td><td>MILDRED.BAILEY@sakilacustomer.org</td><td>1</td><td>81 Hodeida Way</td><td>Jaipur</td><td>India</td></tr>
+                <tr><td>64</td><td>JUDITH</td><td>COX</td><td>JUDITH.COX@sakilacustomer.org</td><td>0</td><td>1966 Amroha Avenue</td><td>Daxian</td><td>China</td></tr>
+                <tr><td>65</td><td>ROSE</td><td>HOWARD</td><td>ROSE.HOWARD@sakilacustomer.org</td><td>1</td><td>698 Otsu Street</td><td>Cayenne</td><td>French Guiana</td></tr>
+                <tr><td>67</td><td>KELLY</td><td>TORRES</td><td>KELLY.TORRES@sakilacustomer.org</td><td>1</td><td>1586 Guaruj Place</td><td>Xi´angtan</td><td>China</td></tr>
+                <tr><td>68</td><td>NICOLE</td><td>PETERSON</td><td>NICOLE.PETERSON@sakilacustomer.org</td><td>1</td><td>57 Arlington Manor</td><td>Shivapuri</td><td>India</td></tr>
+                <tr><td>69</td><td>JUDY</td><td>GRAY</td><td>JUDY.GRAY@sakilacustomer.org</td><td>1</td><td>1031 Daugavpils Parkway</td><td>Béchar</td><td>Algeria</td></tr>
+                <tr><td>72</td><td>THERESA</td><td>WATSON</td><td>THERESA.WATSON@sakilacustomer.org</td><td>1</td><td>89 Allappuzha (Alleppey) Manor</td><td>Taguig</td><td>Philippines</td></tr>
+                <tr><td>73</td><td>BEVERLY</td><td>BROOKS</td><td>BEVERLY.BROOKS@sakilacustomer.org</td><td>1</td><td>1947 Poos de Caldas Boulevard</td><td>Chiayi</td><td>Taiwan</td></tr>
+                <tr><td>74</td><td>DENISE</td><td>KELLY</td><td>DENISE.KELLY@sakilacustomer.org</td><td>1</td><td>1206 Dos Quebradas Place</td><td>Rio Claro</td><td>Brazil</td></tr>
+                <tr><td>77</td><td>JANE</td><td>BENNETT</td><td>JANE.BENNETT@sakilacustomer.org</td><td>1</td><td>1692 Ede Loop</td><td>Araçatuba</td><td>Brazil</td></tr>
+                <tr><td>81</td><td>ANDREA</td><td>HENDERSON</td><td>ANDREA.HENDERSON@sakilacustomer.org</td><td>1</td><td>320 Baiyin Parkway</td><td>Mahajanga</td><td>Madagascar</td></tr>
+                <tr><td>83</td><td>LOUISE</td><td>JENKINS</td><td>LOUISE.JENKINS@sakilacustomer.org</td><td>1</td><td>929 Tallahassee Loop</td><td>Springs</td><td>South Africa</td></tr>
+                <tr><td>85</td><td>ANNE</td><td>POWELL</td><td>ANNE.POWELL@sakilacustomer.org</td><td>1</td><td>1557 Ktahya Boulevard</td><td>Bradford</td><td>United Kingdom</td></tr>
+                <tr><td>88</td><td>BONNIE</td><td>HUGHES</td><td>BONNIE.HUGHES@sakilacustomer.org</td><td>1</td><td>1942 Ciparay Parkway</td><td>Cheju</td><td>South Korea</td></tr>
+                <tr><td>93</td><td>PHYLLIS</td><td>FOSTER</td><td>PHYLLIS.FOSTER@sakilacustomer.org</td><td>1</td><td>832 Nakhon Sawan Manor</td><td>Zalantun</td><td>China</td></tr>
+                <tr><td>96</td><td>DIANA</td><td>ALEXANDER</td><td>DIANA.ALEXANDER@sakilacustomer.org</td><td>1</td><td>1308 Arecibo Way</td><td>Augusta-Richmond County</td><td>United States</td></tr>
+                <tr><td>98</td><td>LILLIAN</td><td>GRIFFIN</td><td>LILLIAN.GRIFFIN@sakilacustomer.org</td><td>1</td><td>669 Firozabad Loop</td><td>al-Ayn</td><td>United Arab Emirates</td></tr>
+                <tr><td>99</td><td>EMILY</td><td>DIAZ</td><td>EMILY.DIAZ@sakilacustomer.org</td><td>1</td><td>588 Vila Velha Manor</td><td>Kimchon</td><td>South Korea</td></tr>
+                <tr><td>100</td><td>ROBIN</td><td>HAYES</td><td>ROBIN.HAYES@sakilacustomer.org</td><td>1</td><td>1913 Kamakura Place</td><td>Jelets</td><td>Russian Federation</td></tr>
+                <tr><td>101</td><td>PEGGY</td><td>MYERS</td><td>PEGGY.MYERS@sakilacustomer.org</td><td>1</td><td>733 Mandaluyong Place</td><td>Abha</td><td>Saudi Arabia</td></tr>
+                <tr><td>104</td><td>RITA</td><td>GRAHAM</td><td>RITA.GRAHAM@sakilacustomer.org</td><td>1</td><td>1386 Yangor Avenue</td><td>Toulon</td><td>France</td></tr>
+                <tr><td>106</td><td>CONNIE</td><td>WALLACE</td><td>CONNIE.WALLACE@sakilacustomer.org</td><td>1</td><td>1867 San Juan Bautista Tuxtepec Avenue</td><td>Ivanovo</td><td>Russian Federation</td></tr>
+                <tr><td>111</td><td>CARMEN</td><td>OWENS</td><td>CARMEN.OWENS@sakilacustomer.org</td><td>1</td><td>1378 Alvorada Avenue</td><td>Caracas</td><td>Venezuela</td></tr>
+                <tr><td>115</td><td>WENDY</td><td>HARRISON</td><td>WENDY.HARRISON@sakilacustomer.org</td><td>1</td><td>1107 Nakhon Sawan Avenue</td><td>Nezahualcóyotl</td><td>Mexico</td></tr>
+                <tr><td>123</td><td>SHANNON</td><td>FREEMAN</td><td>SHANNON.FREEMAN@sakilacustomer.org</td><td>1</td><td>117 Boa Vista Way</td><td>Varanasi (Benares)</td><td>India</td></tr>
+                <tr><td>127</td><td>ELAINE</td><td>STEVENS</td><td>ELAINE.STEVENS@sakilacustomer.org</td><td>1</td><td>801 Hagonoy Drive</td><td>Smolensk</td><td>Russian Federation</td></tr>
+                <tr><td>130</td><td>CHARLOTTE</td><td>HUNTER</td><td>CHARLOTTE.HUNTER@sakilacustomer.org</td><td>1</td><td>758 Junan Lane</td><td>Águas Lindas de Goiás</td><td>Brazil</td></tr>
+                <tr><td>132</td><td>ESTHER</td><td>CRAWFORD</td><td>ESTHER.CRAWFORD@sakilacustomer.org</td><td>1</td><td>898 Belm Manor</td><td>Botshabelo</td><td>South Africa</td></tr>
+                <tr><td>133</td><td>PAULINE</td><td>HENRY</td><td>PAULINE.HENRY@sakilacustomer.org</td><td>1</td><td>261 Saint Louis Way</td><td>Torreón</td><td>Mexico</td></tr>
+                <tr><td>134</td><td>EMMA</td><td>BOYD</td><td>EMMA.BOYD@sakilacustomer.org</td><td>1</td><td>765 Southampton Drive</td><td>Qalyub</td><td>Egypt</td></tr>
+                <tr><td>142</td><td>APRIL</td><td>BURNS</td><td>APRIL.BURNS@sakilacustomer.org</td><td>1</td><td>483 Ljubertsy Parkway</td><td>Dundee</td><td>United Kingdom</td></tr>
+                <tr><td>143</td><td>LESLIE</td><td>GORDON</td><td>LESLIE.GORDON@sakilacustomer.org</td><td>1</td><td>374 Bat Yam Boulevard</td><td>Kilis</td><td>Turkey</td></tr>
+                <tr><td>150</td><td>DANIELLE</td><td>DANIELS</td><td>DANIELLE.DANIELS@sakilacustomer.org</td><td>1</td><td>781 Shimonoseki Drive</td><td>Hidalgo</td><td>Mexico</td></tr>
+                <tr><td>151</td><td>MEGAN</td><td>PALMER</td><td>MEGAN.PALMER@sakilacustomer.org</td><td>1</td><td>1560 Jelets Boulevard</td><td>Laiwu</td><td>China</td></tr>
+                <tr><td>153</td><td>SUZANNE</td><td>NICHOLS</td><td>SUZANNE.NICHOLS@sakilacustomer.org</td><td>1</td><td>456 Escobar Way</td><td>Jakarta</td><td>Indonesia</td></tr>
+                <tr><td>156</td><td>BERTHA</td><td>FERGUSON</td><td>BERTHA.FERGUSON@sakilacustomer.org</td><td>1</td><td>1367 Yantai Manor</td><td>Ondo</td><td>Nigeria</td></tr>
+                <tr><td>160</td><td>ERIN</td><td>DUNN</td><td>ERIN.DUNN@sakilacustomer.org</td><td>1</td><td>1623 Baha Blanca Manor</td><td>Ljubertsy</td><td>Russian Federation</td></tr>
+                <tr><td>165</td><td>LORRAINE</td><td>STEPHENS</td><td>LORRAINE.STEPHENS@sakilacustomer.org</td><td>1</td><td>154 Tallahassee Loop</td><td>Hami</td><td>China</td></tr>
+                <tr><td>169</td><td>ERICA</td><td>MATTHEWS</td><td>ERICA.MATTHEWS@sakilacustomer.org</td><td>0</td><td>1294 Firozabad Drive</td><td>Pingxiang</td><td>China</td></tr>
+                <tr><td>174</td><td>YVONNE</td><td>WATKINS</td><td>YVONNE.WATKINS@sakilacustomer.org</td><td>1</td><td>1848 Salala Boulevard</td><td>Ocumare del Tuy</td><td>Venezuela</td></tr>
+                <tr><td>175</td><td>ANNETTE</td><td>OLSON</td><td>ANNETTE.OLSON@sakilacustomer.org</td><td>1</td><td>431 Xi´angtan Avenue</td><td>Allappuzha (Alleppey)</td><td>India</td></tr>
+                <tr><td>180</td><td>STACY</td><td>CUNNINGHAM</td><td>STACY.CUNNINGHAM@sakilacustomer.org</td><td>1</td><td>1410 Benin City Parkway</td><td>Pereira</td><td>Colombia</td></tr>
+                <tr><td>182</td><td>RENEE</td><td>LANE</td><td>RENEE.LANE@sakilacustomer.org</td><td>1</td><td>533 al-Ayn Boulevard</td><td>Compton</td><td>United States</td></tr>
+                <tr><td>184</td><td>VIVIAN</td><td>RUIZ</td><td>VIVIAN.RUIZ@sakilacustomer.org</td><td>1</td><td>741 Ambattur Manor</td><td>´s-Hertogenbosch</td><td>Netherlands</td></tr>
+                <tr><td>188</td><td>MELANIE</td><td>ARMSTRONG</td><td>MELANIE.ARMSTRONG@sakilacustomer.org</td><td>1</td><td>1166 Changhwa Street</td><td>Bayugan</td><td>Philippines</td></tr>
+                <tr><td>189</td><td>LORETTA</td><td>CARPENTER</td><td>LORETTA.CARPENTER@sakilacustomer.org</td><td>1</td><td>891 Novi Sad Manor</td><td>Oshawa</td><td>Canada</td></tr>
+                <tr><td>192</td><td>LAURIE</td><td>LAWRENCE</td><td>LAURIE.LAWRENCE@sakilacustomer.org</td><td>1</td><td>9 San Miguel de Tucumn Manor</td><td>Firozabad</td><td>India</td></tr>
+                <tr><td>194</td><td>KRISTEN</td><td>CHAVEZ</td><td>KRISTEN.CHAVEZ@sakilacustomer.org</td><td>1</td><td>345 Oshawa Boulevard</td><td>Hino</td><td>Japan</td></tr>
+                <tr><td>195</td><td>VANESSA</td><td>SIMS</td><td>VANESSA.SIMS@sakilacustomer.org</td><td>1</td><td>1792 Valle de la Pascua Place</td><td>Siegen</td><td>Germany</td></tr>
+                <tr><td>199</td><td>BETH</td><td>FRANKLIN</td><td>BETH.FRANKLIN@sakilacustomer.org</td><td>1</td><td>1149 A Corua (La Corua) Boulevard</td><td>Haiphong</td><td>Vietnam</td></tr>
+                <tr><td>202</td><td>CARLA</td><td>GUTIERREZ</td><td>CARLA.GUTIERREZ@sakilacustomer.org</td><td>1</td><td>642 Nador Drive</td><td>Bhusawal</td><td>India</td></tr>
+                <tr><td>203</td><td>TARA</td><td>RYAN</td><td>TARA.RYAN@sakilacustomer.org</td><td>1</td><td>1688 Nador Lane</td><td>Gorontalo</td><td>Indonesia</td></tr>
+                <tr><td>208</td><td>LUCY</td><td>WHEELER</td><td>LUCY.WHEELER@sakilacustomer.org</td><td>1</td><td>624 Oshawa Boulevard</td><td>Balurghat</td><td>India</td></tr>
+                <tr><td>212</td><td>WILMA</td><td>RICHARDS</td><td>WILMA.RICHARDS@sakilacustomer.org</td><td>1</td><td>660 Jedda Boulevard</td><td>Bellevue</td><td>United States</td></tr>
+                <tr><td>215</td><td>JESSIE</td><td>BANKS</td><td>JESSIE.BANKS@sakilacustomer.org</td><td>1</td><td>1229 Valencia Parkway</td><td>Stara Zagora</td><td>Bulgaria</td></tr>
+                <tr><td>216</td><td>NATALIE</td><td>MEYER</td><td>NATALIE.MEYER@sakilacustomer.org</td><td>1</td><td>1201 Qomsheh Manor</td><td>Aparecida de Goiânia</td><td>Brazil</td></tr>
+                <tr><td>217</td><td>AGNES</td><td>BISHOP</td><td>AGNES.BISHOP@sakilacustomer.org</td><td>1</td><td>866 Shivapuri Manor</td><td>Sambhal</td><td>India</td></tr>
+                <tr><td>219</td><td>WILLIE</td><td>HOWELL</td><td>WILLIE.HOWELL@sakilacustomer.org</td><td>1</td><td>1244 Allappuzha (Alleppey) Place</td><td>Vicente López</td><td>Argentina</td></tr>
+                <tr><td>222</td><td>DELORES</td><td>HANSEN</td><td>DELORES.HANSEN@sakilacustomer.org</td><td>1</td><td>810 Palghat (Palakkad) Boulevard</td><td>Jaroslavl</td><td>Russian Federation</td></tr>
+                <tr><td>226</td><td>MAUREEN</td><td>LITTLE</td><td>MAUREEN.LITTLE@sakilacustomer.org</td><td>1</td><td>201 Effon-Alaiye Way</td><td>Asunción</td><td>Paraguay</td></tr>
+                <tr><td>227</td><td>COLLEEN</td><td>BURTON</td><td>COLLEEN.BURTON@sakilacustomer.org</td><td>1</td><td>430 Alessandria Loop</td><td>Saarbrücken</td><td>Germany</td></tr>
+                <tr><td>228</td><td>ALLISON</td><td>STANLEY</td><td>ALLISON.STANLEY@sakilacustomer.org</td><td>1</td><td>754 Valencia Place</td><td>Phnom Penh</td><td>Cambodia</td></tr>
+                <tr><td>229</td><td>TAMARA</td><td>NGUYEN</td><td>TAMARA.NGUYEN@sakilacustomer.org</td><td>1</td><td>356 Olomouc Manor</td><td>Anápolis</td><td>Brazil</td></tr>
+                <tr><td>232</td><td>CONSTANCE</td><td>REID</td><td>CONSTANCE.REID@sakilacustomer.org</td><td>1</td><td>885 Yingkou Manor</td><td>Zaria</td><td>Nigeria</td></tr>
+                <tr><td>233</td><td>LILLIE</td><td>KIM</td><td>LILLIE.KIM@sakilacustomer.org</td><td>1</td><td>1736 Cavite Place</td><td>Idfu</td><td>Egypt</td></tr>
+                <tr><td>235</td><td>JACKIE</td><td>LYNCH</td><td>JACKIE.LYNCH@sakilacustomer.org</td><td>1</td><td>98 Stara Zagora Boulevard</td><td>Buenaventura</td><td>Colombia</td></tr>
+                <tr><td>238</td><td>NELLIE</td><td>GARRETT</td><td>NELLIE.GARRETT@sakilacustomer.org</td><td>1</td><td>1964 Gijn Manor</td><td>Shimoga</td><td>India</td></tr>
+                <tr><td>246</td><td>MARIAN</td><td>MENDOZA</td><td>MARIAN.MENDOZA@sakilacustomer.org</td><td>1</td><td>829 Grand Prairie Way</td><td>Maringá</td><td>Brazil</td></tr>
+                <tr><td>247</td><td>STELLA</td><td>MORENO</td><td>STELLA.MORENO@sakilacustomer.org</td><td>1</td><td>1473 Changhwa Parkway</td><td>Coacalco de Berriozábal</td><td>Mexico</td></tr>
+                <tr><td>249</td><td>DORA</td><td>MEDINA</td><td>DORA.MEDINA@sakilacustomer.org</td><td>1</td><td>1760 Oshawa Manor</td><td>Tianjin</td><td>China</td></tr>
+                <tr><td>264</td><td>GWENDOLYN</td><td>MAY</td><td>GWENDOLYN.MAY@sakilacustomer.org</td><td>1</td><td>446 Kirovo-Tepetsk Lane</td><td>Higashiosaka</td><td>Japan</td></tr>
+                <tr><td>270</td><td>LEAH</td><td>CURTIS</td><td>LEAH.CURTIS@sakilacustomer.org</td><td>1</td><td>906 Goinia Way</td><td>Kalisz</td><td>Poland</td></tr>
+                <tr><td>272</td><td>KAY</td><td>CALDWELL</td><td>KAY.CALDWELL@sakilacustomer.org</td><td>1</td><td>85 San Felipe de Puerto Plata Drive</td><td>Yantai</td><td>China</td></tr>
+                <tr><td>278</td><td>BILLIE</td><td>HORTON</td><td>BILLIE.HORTON@sakilacustomer.org</td><td>1</td><td>457 Tongliao Loop</td><td>Inegöl</td><td>Turkey</td></tr>
+                <tr><td>282</td><td>JENNY</td><td>CASTRO</td><td>JENNY.CASTRO@sakilacustomer.org</td><td>1</td><td>1405 Chisinau Place</td><td>Ponce</td><td>Puerto Rico</td></tr>
+                <tr><td>283</td><td>FELICIA</td><td>SUTTON</td><td>FELICIA.SUTTON@sakilacustomer.org</td><td>1</td><td>226 Halifax Street</td><td>Korla</td><td>China</td></tr>
+                <tr><td>291</td><td>TONI</td><td>HOLT</td><td>TONI.HOLT@sakilacustomer.org</td><td>1</td><td>1936 Cuman Avenue</td><td>Roanoke</td><td>United States</td></tr>
+                <tr><td>298</td><td>ERIKA</td><td>PENA</td><td>ERIKA.PENA@sakilacustomer.org</td><td>1</td><td>898 Jining Lane</td><td>Oulu</td><td>Finland</td></tr>
+                <tr><td>301</td><td>ROBERT</td><td>BAUGHMAN</td><td>ROBERT.BAUGHMAN@sakilacustomer.org</td><td>1</td><td>1883 Maikop Lane</td><td>Kaliningrad</td><td>Russian Federation</td></tr>
+                <tr><td>303</td><td>WILLIAM</td><td>SATTERFIELD</td><td>WILLIAM.SATTERFIELD@sakilacustomer.org</td><td>1</td><td>687 Alessandria Parkway</td><td>Sanaa</td><td>Yemen</td></tr>
+                <tr><td>308</td><td>THOMAS</td><td>GRIGSBY</td><td>THOMAS.GRIGSBY@sakilacustomer.org</td><td>1</td><td>1191 Sungai Petani Boulevard</td><td>Kansas City</td><td>United States</td></tr>
+                <tr><td>310</td><td>DANIEL</td><td>CABRAL</td><td>DANIEL.CABRAL@sakilacustomer.org</td><td>1</td><td>543 Bergamo Avenue</td><td>Ibirité</td><td>Brazil</td></tr>
+                <tr><td>312</td><td>MARK</td><td>RINEHART</td><td>MARK.RINEHART@sakilacustomer.org</td><td>1</td><td>780 Kimberley Way</td><td>Tabuk</td><td>Saudi Arabia</td></tr>
+                <tr><td>313</td><td>DONALD</td><td>MAHON</td><td>DONALD.MAHON@sakilacustomer.org</td><td>1</td><td>1774 Yaound Place</td><td>Ezhou</td><td>China</td></tr>
+                <tr><td>324</td><td>GARY</td><td>COY</td><td>GARY.COY@sakilacustomer.org</td><td>1</td><td>867 Benin City Avenue</td><td>Yuzhou</td><td>China</td></tr>
+                <tr><td>325</td><td>TIMOTHY</td><td>BUNN</td><td>TIMOTHY.BUNN@sakilacustomer.org</td><td>1</td><td>981 Kumbakonam Place</td><td>Brasília</td><td>Brazil</td></tr>
+                <tr><td>326</td><td>JOSE</td><td>ANDREW</td><td>JOSE.ANDREW@sakilacustomer.org</td><td>1</td><td>1016 Iwakuni Street</td><td>Kingstown</td><td>Saint Vincent and the Grenadines</td></tr>
+                <tr><td>328</td><td>JEFFREY</td><td>SPEAR</td><td>JEFFREY.SPEAR@sakilacustomer.org</td><td>1</td><td>1860 Taguig Loop</td><td>Ciparay</td><td>Indonesia</td></tr>
+                <tr><td>330</td><td>SCOTT</td><td>SHELLEY</td><td>SCOTT.SHELLEY@sakilacustomer.org</td><td>1</td><td>587 Benguela Manor</td><td>Aurora</td><td>United States</td></tr>
+                <tr><td>341</td><td>PETER</td><td>MENARD</td><td>PETER.MENARD@sakilacustomer.org</td><td>1</td><td>1217 Konotop Avenue</td><td>Ede</td><td>Netherlands</td></tr>
+                <tr><td>345</td><td>CARL</td><td>ARTIS</td><td>CARL.ARTIS@sakilacustomer.org</td><td>1</td><td>1628 Nagareyama Lane</td><td>San Lorenzo</td><td>Paraguay</td></tr>
+                <tr><td>351</td><td>JACK</td><td>FOUST</td><td>JACK.FOUST@sakilacustomer.org</td><td>1</td><td>1378 Beira Loop</td><td>Zeleznogorsk</td><td>Russian Federation</td></tr>
+                <tr><td>352</td><td>ALBERT</td><td>CROUSE</td><td>ALBERT.CROUSE@sakilacustomer.org</td><td>1</td><td>1641 Changhwa Place</td><td>Bamenda</td><td>Cameroon</td></tr>
+                <tr><td>357</td><td>KEITH</td><td>RICO</td><td>KEITH.RICO@sakilacustomer.org</td><td>1</td><td>482 Kowloon and New Kowloon Manor</td><td>Bratislava</td><td>Slovakia</td></tr>
+                <tr><td>359</td><td>WILLIE</td><td>MARKHAM</td><td>WILLIE.MARKHAM@sakilacustomer.org</td><td>1</td><td>1623 Kingstown Drive</td><td>Almirante Brown</td><td>Argentina</td></tr>
+                <tr><td>361</td><td>LAWRENCE</td><td>LAWTON</td><td>LAWRENCE.LAWTON@sakilacustomer.org</td><td>1</td><td>114 Jalib al-Shuyukh Manor</td><td>Yaoundé</td><td>Cameroon</td></tr>
+                <tr><td>364</td><td>BENJAMIN</td><td>VARNEY</td><td>BENJAMIN.VARNEY@sakilacustomer.org</td><td>1</td><td>817 Laredo Avenue</td><td>Guadalajara</td><td>Mexico</td></tr>
+                <tr><td>365</td><td>BRUCE</td><td>SCHWARZ</td><td>BRUCE.SCHWARZ@sakilacustomer.org</td><td>1</td><td>1565 Tangail Manor</td><td>Okinawa</td><td>Japan</td></tr>
+                <tr><td>367</td><td>ADAM</td><td>GOOCH</td><td>ADAM.GOOCH@sakilacustomer.org</td><td>1</td><td>230 Urawa Drive</td><td>Adoni</td><td>India</td></tr>
+                <tr><td>369</td><td>FRED</td><td>WHEAT</td><td>FRED.WHEAT@sakilacustomer.org</td><td>1</td><td>433 Florencia Street</td><td>Juárez</td><td>Mexico</td></tr>
+                <tr><td>374</td><td>JEREMY</td><td>HURTADO</td><td>JEREMY.HURTADO@sakilacustomer.org</td><td>1</td><td>1133 Rizhao Avenue</td><td>Vitória de Santo Antão</td><td>Brazil</td></tr>
+                <tr><td>377</td><td>HOWARD</td><td>FORTNER</td><td>HOWARD.FORTNER@sakilacustomer.org</td><td>1</td><td>220 Hidalgo Drive</td><td>Kermanshah</td><td>Iran</td></tr>
+                <tr><td>379</td><td>CARLOS</td><td>COUGHLIN</td><td>CARLOS.COUGHLIN@sakilacustomer.org</td><td>1</td><td>97 Mogiljov Lane</td><td>Bhavnagar</td><td>India</td></tr>
+                <tr><td>382</td><td>VICTOR</td><td>BARKLEY</td><td>VICTOR.BARKLEY@sakilacustomer.org</td><td>1</td><td>401 Sucre Boulevard</td><td>Manchester</td><td>United States</td></tr>
+                <tr><td>383</td><td>MARTIN</td><td>BALES</td><td>MARTIN.BALES@sakilacustomer.org</td><td>1</td><td>368 Hunuco Boulevard</td><td>Namibe</td><td>Angola</td></tr>
+                <tr><td>384</td><td>ERNEST</td><td>STEPP</td><td>ERNEST.STEPP@sakilacustomer.org</td><td>1</td><td>500 Lincoln Parkway</td><td>Huai´an</td><td>China</td></tr>
+                <tr><td>385</td><td>PHILLIP</td><td>HOLM</td><td>PHILLIP.HOLM@sakilacustomer.org</td><td>1</td><td>102 Chapra Drive</td><td>Tama</td><td>Japan</td></tr>
+                <tr><td>387</td><td>JESSE</td><td>SCHILLING</td><td>JESSE.SCHILLING@sakilacustomer.org</td><td>1</td><td>514 Ife Way</td><td>Lubumbashi</td><td>Congo, The Democratic Republic of the</td></tr>
+                <tr><td>391</td><td>CLARENCE</td><td>GAMEZ</td><td>CLARENCE.GAMEZ@sakilacustomer.org</td><td>1</td><td>767 Pyongyang Drive</td><td>Izumisano</td><td>Japan</td></tr>
+                <tr><td>392</td><td>SEAN</td><td>DOUGLASS</td><td>SEAN.DOUGLASS@sakilacustomer.org</td><td>1</td><td>614 Pak Kret Street</td><td>Addis Abeba</td><td>Ethiopia</td></tr>
+                <tr><td>397</td><td>JIMMY</td><td>SCHRADER</td><td>JIMMY.SCHRADER@sakilacustomer.org</td><td>1</td><td>616 Hagonoy Avenue</td><td>Atšinsk</td><td>Russian Federation</td></tr>
+                <tr><td>399</td><td>DANNY</td><td>ISOM</td><td>DANNY.ISOM@sakilacustomer.org</td><td>1</td><td>734 Bchar Place</td><td>Okara</td><td>Pakistan</td></tr>
+                <tr><td>409</td><td>RODNEY</td><td>MOELLER</td><td>RODNEY.MOELLER@sakilacustomer.org</td><td>1</td><td>1936 Lapu-Lapu Parkway</td><td>Deba Habe</td><td>Nigeria</td></tr>
+                <tr><td>414</td><td>VINCENT</td><td>RALSTON</td><td>VINCENT.RALSTON@sakilacustomer.org</td><td>1</td><td>397 Sunnyvale Avenue</td><td>Allende</td><td>Mexico</td></tr>
+                <tr><td>415</td><td>GLENN</td><td>PULLEN</td><td>GLENN.PULLEN@sakilacustomer.org</td><td>1</td><td>992 Klerksdorp Loop</td><td>Amersfoort</td><td>Netherlands</td></tr>
+                <tr><td>419</td><td>CHAD</td><td>CARBONE</td><td>CHAD.CARBONE@sakilacustomer.org</td><td>1</td><td>1948 Bayugan Parkway</td><td>Katihar</td><td>India</td></tr>
+                <tr><td>422</td><td>MELVIN</td><td>ELLINGTON</td><td>MELVIN.ELLINGTON@sakilacustomer.org</td><td>1</td><td>1557 Cape Coral Parkway</td><td>Laohekou</td><td>China</td></tr>
+                <tr><td>425</td><td>FRANCIS</td><td>SIKES</td><td>FRANCIS.SIKES@sakilacustomer.org</td><td>1</td><td>355 Vitria de Santo Anto Way</td><td>San Juan Bautista Tuxtepec</td><td>Mexico</td></tr>
+                <tr><td>429</td><td>FREDERICK</td><td>ISBELL</td><td>FREDERICK.ISBELL@sakilacustomer.org</td><td>1</td><td>1404 Taguig Drive</td><td>Tsuyama</td><td>Japan</td></tr>
+                <tr><td>431</td><td>JOEL</td><td>FRANCISCO</td><td>JOEL.FRANCISCO@sakilacustomer.org</td><td>1</td><td>287 Cuautla Boulevard</td><td>Sucre</td><td>Bolivia</td></tr>
+                <tr><td>435</td><td>RICKY</td><td>SHELBY</td><td>RICKY.SHELBY@sakilacustomer.org</td><td>1</td><td>722 Bradford Lane</td><td>Junan</td><td>China</td></tr>
+                <tr><td>437</td><td>RANDALL</td><td>NEUMANN</td><td>RANDALL.NEUMANN@sakilacustomer.org</td><td>1</td><td>1245 Ibirit Way</td><td>La Romana</td><td>Dominican Republic</td></tr>
+                <tr><td>440</td><td>BERNARD</td><td>COLBY</td><td>BERNARD.COLBY@sakilacustomer.org</td><td>1</td><td>495 Bhimavaram Lane</td><td>Dhule (Dhulia)</td><td>India</td></tr>
+                <tr><td>443</td><td>FRANCISCO</td><td>SKIDMORE</td><td>FRANCISCO.SKIDMORE@sakilacustomer.org</td><td>1</td><td>614 Denizli Parkway</td><td>São Leopoldo</td><td>Brazil</td></tr>
+                <tr><td>445</td><td>MICHEAL</td><td>FORMAN</td><td>MICHEAL.FORMAN@sakilacustomer.org</td><td>1</td><td>203 Tambaram Street</td><td>Escobar</td><td>Argentina</td></tr>
+                <tr><td>449</td><td>OSCAR</td><td>AQUINO</td><td>OSCAR.AQUINO@sakilacustomer.org</td><td>1</td><td>956 Nam Dinh Manor</td><td>Sirjan</td><td>Iran</td></tr>
+                <tr><td>450</td><td>JAY</td><td>ROBB</td><td>JAY.ROBB@sakilacustomer.org</td><td>1</td><td>1947 Paarl Way</td><td>Surakarta</td><td>Indonesia</td></tr>
+                <tr><td>455</td><td>JON</td><td>WILES</td><td>JON.WILES@sakilacustomer.org</td><td>1</td><td>659 Gatineau Boulevard</td><td>El Alto</td><td>Bolivia</td></tr>
+                <tr><td>456</td><td>RONNIE</td><td>RICKETTS</td><td>RONNIE.RICKETTS@sakilacustomer.org</td><td>1</td><td>1889 Valparai Way</td><td>Ziguinchor</td><td>Senegal</td></tr>
+                <tr><td>461</td><td>DEREK</td><td>BLAKELY</td><td>DEREK.BLAKELY@sakilacustomer.org</td><td>1</td><td>118 Jaffna Loop</td><td>Gingoog</td><td>Philippines</td></tr>
+                <tr><td>463</td><td>DARRELL</td><td>POWER</td><td>DARRELL.POWER@sakilacustomer.org</td><td>1</td><td>1844 Usak Avenue</td><td>Halifax</td><td>Canada</td></tr>
+                <tr><td>466</td><td>LEO</td><td>EBERT</td><td>LEO.EBERT@sakilacustomer.org</td><td>1</td><td>1322 Mosul Parkway</td><td>Dongying</td><td>China</td></tr>
+                <tr><td>474</td><td>DUSTIN</td><td>GILLETTE</td><td>DUSTIN.GILLETTE@sakilacustomer.org</td><td>1</td><td>1854 Okara Boulevard</td><td>Emmen</td><td>Netherlands</td></tr>
+                <tr><td>475</td><td>PEDRO</td><td>CHESTNUT</td><td>PEDRO.CHESTNUT@sakilacustomer.org</td><td>1</td><td>421 Yaound Street</td><td>Šostka</td><td>Ukraine</td></tr>
+                <tr><td>476</td><td>DERRICK</td><td>BOURQUE</td><td>DERRICK.BOURQUE@sakilacustomer.org</td><td>1</td><td>1153 Allende Way</td><td>Gatineau</td><td>Canada</td></tr>
+                <tr><td>478</td><td>LEWIS</td><td>LYMAN</td><td>LEWIS.LYMAN@sakilacustomer.org</td><td>1</td><td>632 Usolje-Sibirskoje Parkway</td><td>Ashqelon</td><td>Israel</td></tr>
+                <tr><td>480</td><td>COREY</td><td>HAUSER</td><td>COREY.HAUSER@sakilacustomer.org</td><td>1</td><td>984 Novoterkassk Loop</td><td>Gaziantep</td><td>Turkey</td></tr>
+                <tr><td>483</td><td>VERNON</td><td>CHAPA</td><td>VERNON.CHAPA@sakilacustomer.org</td><td>1</td><td>698 Jelets Boulevard</td><td>Denizli</td><td>Turkey</td></tr>
+                <tr><td>488</td><td>SHANE</td><td>MILLARD</td><td>SHANE.MILLARD@sakilacustomer.org</td><td>1</td><td>184 Mandaluyong Street</td><td>La Paz</td><td>Mexico</td></tr>
+                <tr><td>489</td><td>RICARDO</td><td>MEADOR</td><td>RICARDO.MEADOR@sakilacustomer.org</td><td>1</td><td>591 Sungai Petani Drive</td><td>Okayama</td><td>Japan</td></tr>
+                <tr><td>496</td><td>TYLER</td><td>WREN</td><td>TYLER.WREN@sakilacustomer.org</td><td>1</td><td>1060 Tandil Lane</td><td>Rizhao</td><td>China</td></tr>
+                <tr><td>498</td><td>GENE</td><td>SANBORN</td><td>GENE.SANBORN@sakilacustomer.org</td><td>1</td><td>1416 San Juan Bautista Tuxtepec Avenue</td><td>Salala</td><td>Oman</td></tr>
+                <tr><td>501</td><td>RUBEN</td><td>GEARY</td><td>RUBEN.GEARY@sakilacustomer.org</td><td>1</td><td>414 Mandaluyong Street</td><td>Lublin</td><td>Poland</td></tr>
+                <tr><td>505</td><td>RAFAEL</td><td>ABNEY</td><td>RAFAEL.ABNEY@sakilacustomer.org</td><td>1</td><td>48 Maracabo Place</td><td>Talavera</td><td>Philippines</td></tr>
+                <tr><td>507</td><td>EDGAR</td><td>RHOADS</td><td>EDGAR.RHOADS@sakilacustomer.org</td><td>1</td><td>1269 Ipoh Avenue</td><td>Eskisehir</td><td>Turkey</td></tr>
+                <tr><td>509</td><td>RAUL</td><td>FORTIER</td><td>RAUL.FORTIER@sakilacustomer.org</td><td>1</td><td>1747 Rustenburg Place</td><td>Chapra</td><td>India</td></tr>
+                <tr><td>511</td><td>CHESTER</td><td>BENNER</td><td>CHESTER.BENNER@sakilacustomer.org</td><td>1</td><td>1574 Goinia Boulevard</td><td>Suihua</td><td>China</td></tr>
+                <tr><td>516</td><td>ELMER</td><td>NOE</td><td>ELMER.NOE@sakilacustomer.org</td><td>1</td><td>1768 Udine Loop</td><td>Battambang</td><td>Cambodia</td></tr>
+                <tr><td>517</td><td>BRAD</td><td>MCCURDY</td><td>BRAD.MCCURDY@sakilacustomer.org</td><td>1</td><td>608 Birgunj Parkway</td><td>Chungho</td><td>Taiwan</td></tr>
+                <tr><td>519</td><td>RON</td><td>DELUCA</td><td>RON.DELUCA@sakilacustomer.org</td><td>1</td><td>1949 Sanya Street</td><td>Isesaki</td><td>Japan</td></tr>
+                <tr><td>523</td><td>HARVEY</td><td>GUAJARDO</td><td>HARVEY.GUAJARDO@sakilacustomer.org</td><td>1</td><td>600 Purnea (Purnia) Avenue</td><td>Vinh</td><td>Vietnam</td></tr>
+                <tr><td>524</td><td>JARED</td><td>ELY</td><td>JARED.ELY@sakilacustomer.org</td><td>1</td><td>1003 Qinhuangdao Street</td><td>Purwakarta</td><td>Indonesia</td></tr>
+                <tr><td>534</td><td>CHRISTIAN</td><td>JUNG</td><td>CHRISTIAN.JUNG@sakilacustomer.org</td><td>0</td><td>949 Allende Lane</td><td>Amroha</td><td>India</td></tr>
+                <tr><td>537</td><td>CLINTON</td><td>BUFORD</td><td>CLINTON.BUFORD@sakilacustomer.org</td><td>1</td><td>43 Vilnius Manor</td><td>Aurora</td><td>United States</td></tr>
+                <tr><td>539</td><td>MATHEW</td><td>BOLIN</td><td>MATHEW.BOLIN@sakilacustomer.org</td><td>1</td><td>163 Augusta-Richmond County Loop</td><td>Valencia</td><td>Venezuela</td></tr>
+                <tr><td>542</td><td>LONNIE</td><td>TIRADO</td><td>LONNIE.TIRADO@sakilacustomer.org</td><td>1</td><td>1658 Cuman Loop</td><td>Pangkal Pinang</td><td>Indonesia</td></tr>
+                <tr><td>544</td><td>CODY</td><td>NOLEN</td><td>CODY.NOLEN@sakilacustomer.org</td><td>1</td><td>1715 Okayama Street</td><td>São Bernardo do Campo</td><td>Brazil</td></tr>
+                <tr><td>545</td><td>JULIO</td><td>NOLAND</td><td>JULIO.NOLAND@sakilacustomer.org</td><td>1</td><td>182 Nuku´alofa Drive</td><td>Konotop</td><td>Ukraine</td></tr>
+                <tr><td>546</td><td>KELLY</td><td>KNOTT</td><td>KELLY.KNOTT@sakilacustomer.org</td><td>1</td><td>390 Wroclaw Way</td><td>Sanya</td><td>China</td></tr>
+                <tr><td>547</td><td>KURT</td><td>EMMONS</td><td>KURT.EMMONS@sakilacustomer.org</td><td>1</td><td>1421 Quilmes Lane</td><td>Kanazawa</td><td>Japan</td></tr>
+                <tr><td>551</td><td>CLAYTON</td><td>BARBEE</td><td>CLAYTON.BARBEE@sakilacustomer.org</td><td>1</td><td>1407 Pachuca de Soto Place</td><td>Alvorada</td><td>Brazil</td></tr>
+                <tr><td>552</td><td>HUGH</td><td>WALDROP</td><td>HUGH.WALDROP@sakilacustomer.org</td><td>1</td><td>904 Clarksville Drive</td><td>Haining</td><td>China</td></tr>
+                <tr><td>553</td><td>MAX</td><td>PITT</td><td>MAX.PITT@sakilacustomer.org</td><td>1</td><td>1917 Kumbakonam Parkway</td><td>Novi Sad</td><td>Yugoslavia</td></tr>
+                <tr><td>554</td><td>DWAYNE</td><td>OLVERA</td><td>DWAYNE.OLVERA@sakilacustomer.org</td><td>1</td><td>1447 Imus Place</td><td>Rajkot</td><td>India</td></tr>
+                <tr><td>561</td><td>IAN</td><td>STILL</td><td>IAN.STILL@sakilacustomer.org</td><td>1</td><td>1894 Boa Vista Way</td><td>Garland</td><td>United States</td></tr>
+                <tr><td>564</td><td>BOB</td><td>PFEIFFER</td><td>BOB.PFEIFFER@sakilacustomer.org</td><td>1</td><td>415 Pune Avenue</td><td>Xintai</td><td>China</td></tr>
+                <tr><td>570</td><td>IVAN</td><td>CROMWELL</td><td>IVAN.CROMWELL@sakilacustomer.org</td><td>1</td><td>1351 Sousse Lane</td><td>Monclova</td><td>Mexico</td></tr>
+                <tr><td>578</td><td>WILLARD</td><td>LUMPKIN</td><td>WILLARD.LUMPKIN@sakilacustomer.org</td><td>1</td><td>1819 Alessandria Loop</td><td>Carmen</td><td>Mexico</td></tr>
+                <tr><td>580</td><td>ROSS</td><td>GREY</td><td>ROSS.GREY@sakilacustomer.org</td><td>1</td><td>951 Springs Lane</td><td>Iligan</td><td>Philippines</td></tr>
+                <tr><td>596</td><td>ENRIQUE</td><td>FORSYTHE</td><td>ENRIQUE.FORSYTHE@sakilacustomer.org</td><td>1</td><td>1101 Bucuresti Boulevard</td><td>Patras</td><td>Greece</td></tr>
+                <tr><td>597</td><td>FREDDIE</td><td>DUGGAN</td><td>FREDDIE.DUGGAN@sakilacustomer.org</td><td>1</td><td>1103 Quilmes Boulevard</td><td>Sullana</td><td>Peru</td></tr>
+            </table>
+            <div class="stats">
+                <h3>📊 Cluster Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stats-item"><div class="stats-label">Avg Total Rentals</div><div class="stats-value">24.02</div></div>
+                    <div class="stats-item"><div class="stats-label">Avg Unique Films</div><div class="stats-value">23.78</div></div>
+                    <div class="stats-item"><div class="stats-label">Avg Total Payment</div><div class="stats-value">$97.14</div></div>
+                    <div class="stats-item"><div class="stats-label">Avg Categories</div><div class="stats-value">12.49</div></div>
+                </div>
+            </div>
+        </div>
+        <div class="cluster-section" id="cluster-1">
+            <div class="cluster-header">
+                <h2>🎯 Cluster 2 - Total Customers: 198</h2>
+            </div>
+            <table>
+                <tr><th>Customer Id</th><th>First Name</th><th>Last Name</th><th>Email</th><th>Active</th><th>Address</th><th>City</th><th>Country</th></tr>
+                <tr><td>1</td><td>MARY</td><td>SMITH</td><td>MARY.SMITH@sakilacustomer.org</td><td>1</td><td>1913 Hanoi Way</td><td>Sasebo</td><td>Japan</td></tr>
+                <tr><td>2</td><td>PATRICIA</td><td>JOHNSON</td><td>PATRICIA.JOHNSON@sakilacustomer.org</td><td>1</td><td>1121 Loja Avenue</td><td>San Bernardino</td><td>United States</td></tr>
+                <tr><td>14</td><td>BETTY</td><td>WHITE</td><td>BETTY.WHITE@sakilacustomer.org</td><td>1</td><td>770 Bydgoszcz Avenue</td><td>Citrus Heights</td><td>United States</td></tr>
+                <tr><td>16</td><td>SANDRA</td><td>MARTIN</td><td>SANDRA.MARTIN@sakilacustomer.org</td><td>0</td><td>360 Toulouse Parkway</td><td>Southend-on-Sea</td><td>United Kingdom</td></tr>
+                <tr><td>19</td><td>RUTH</td><td>MARTINEZ</td><td>RUTH.MARTINEZ@sakilacustomer.org</td><td>1</td><td>1417 Lancaster Avenue</td><td>Kimberley</td><td>South Africa</td></tr>
+                <tr><td>20</td><td>SHARON</td><td>ROBINSON</td><td>SHARON.ROBINSON@sakilacustomer.org</td><td>1</td><td>1688 Okara Way</td><td>Mardan</td><td>Pakistan</td></tr>
+                <tr><td>22</td><td>LAURA</td><td>RODRIGUEZ</td><td>LAURA.RODRIGUEZ@sakilacustomer.org</td><td>1</td><td>28 Charlotte Amalie Street</td><td>Salé</td><td>Morocco</td></tr>
+                <tr><td>23</td><td>SARAH</td><td>LEWIS</td><td>SARAH.LEWIS@sakilacustomer.org</td><td>1</td><td>1780 Hino Boulevard</td><td>Liepaja</td><td>Latvia</td></tr>
+                <tr><td>25</td><td>DEBORAH</td><td>WALKER</td><td>DEBORAH.WALKER@sakilacustomer.org</td><td>1</td><td>934 San Felipe de Puerto Plata Street</td><td>Shikarpur</td><td>Pakistan</td></tr>
+                <tr><td>27</td><td>SHIRLEY</td><td>ALLEN</td><td>SHIRLEY.ALLEN@sakilacustomer.org</td><td>1</td><td>217 Botshabelo Place</td><td>Davao</td><td>Philippines</td></tr>
+                <tr><td>28</td><td>CYNTHIA</td><td>YOUNG</td><td>CYNTHIA.YOUNG@sakilacustomer.org</td><td>1</td><td>1425 Shikarpur Manor</td><td>Munger (Monghyr)</td><td>India</td></tr>
+                <tr><td>30</td><td>MELISSA</td><td>KING</td><td>MELISSA.KING@sakilacustomer.org</td><td>1</td><td>1668 Anpolis Street</td><td>Lungtan</td><td>Taiwan</td></tr>
+                <tr><td>32</td><td>AMY</td><td>LOPEZ</td><td>AMY.LOPEZ@sakilacustomer.org</td><td>1</td><td>176 Mandaluyong Place</td><td>Jhansi</td><td>India</td></tr>
+                <tr><td>35</td><td>VIRGINIA</td><td>GREEN</td><td>VIRGINIA.GREEN@sakilacustomer.org</td><td>1</td><td>391 Callao Drive</td><td>Toulouse</td><td>France</td></tr>
+                <tr><td>38</td><td>MARTHA</td><td>GONZALEZ</td><td>MARTHA.GONZALEZ@sakilacustomer.org</td><td>1</td><td>269 Cam Ranh Parkway</td><td>Chisinau</td><td>Moldova</td></tr>
+                <tr><td>40</td><td>AMANDA</td><td>CARTER</td><td>AMANDA.CARTER@sakilacustomer.org</td><td>1</td><td>671 Graz Street</td><td>Nador</td><td>Morocco</td></tr>
+                <tr><td>41</td><td>STEPHANIE</td><td>MITCHELL</td><td>STEPHANIE.MITCHELL@sakilacustomer.org</td><td>1</td><td>42 Brindisi Place</td><td>Yerevan</td><td>Armenia</td></tr>
+                <tr><td>42</td><td>CAROLYN</td><td>PEREZ</td><td>CAROLYN.PEREZ@sakilacustomer.org</td><td>1</td><td>1632 Bislig Avenue</td><td>Pak Kret</td><td>Thailand</td></tr>
+                <tr><td>44</td><td>MARIE</td><td>TURNER</td><td>MARIE.TURNER@sakilacustomer.org</td><td>1</td><td>1998 Halifax Drive</td><td>Lipetsk</td><td>Russian Federation</td></tr>
+                <tr><td>45</td><td>JANET</td><td>PHILLIPS</td><td>JANET.PHILLIPS@sakilacustomer.org</td><td>1</td><td>1718 Valencia Street</td><td>Antofagasta</td><td>Chile</td></tr>
+                <tr><td>47</td><td>FRANCES</td><td>PARKER</td><td>FRANCES.PARKER@sakilacustomer.org</td><td>1</td><td>686 Garland Manor</td><td>Juazeiro do Norte</td><td>Brazil</td></tr>
+                <tr><td>52</td><td>JULIE</td><td>SANCHEZ</td><td>JULIE.SANCHEZ@sakilacustomer.org</td><td>1</td><td>939 Probolinggo Loop</td><td>A Coruña (La Coruña)</td><td>Spain</td></tr>
+                <tr><td>53</td><td>HEATHER</td><td>MORRIS</td><td>HEATHER.MORRIS@sakilacustomer.org</td><td>1</td><td>17 Kabul Boulevard</td><td>Nagareyama</td><td>Japan</td></tr>
+                <tr><td>54</td><td>TERESA</td><td>ROGERS</td><td>TERESA.ROGERS@sakilacustomer.org</td><td>1</td><td>1964 Allappuzha (Alleppey) Street</td><td>Iwakuni</td><td>Japan</td></tr>
+                <tr><td>57</td><td>EVELYN</td><td>MORGAN</td><td>EVELYN.MORGAN@sakilacustomer.org</td><td>1</td><td>943 Tokat Street</td><td>Vaduz</td><td>Liechtenstein</td></tr>
+                <tr><td>58</td><td>JEAN</td><td>BELL</td><td>JEAN.BELL@sakilacustomer.org</td><td>1</td><td>1114 Liepaja Street</td><td>Kuching</td><td>Malaysia</td></tr>
+                <tr><td>63</td><td>ASHLEY</td><td>RICHARDSON</td><td>ASHLEY.RICHARDSON@sakilacustomer.org</td><td>1</td><td>1214 Hanoi Way</td><td>Lincoln</td><td>United States</td></tr>
+                <tr><td>71</td><td>KATHY</td><td>JAMES</td><td>KATHY.JAMES@sakilacustomer.org</td><td>1</td><td>492 Cam Ranh Street</td><td>Baybay</td><td>Philippines</td></tr>
+                <tr><td>82</td><td>KATHRYN</td><td>COLEMAN</td><td>KATHRYN.COLEMAN@sakilacustomer.org</td><td>1</td><td>927 Baha Blanca Parkway</td><td>Simferopol</td><td>Ukraine</td></tr>
+                <tr><td>90</td><td>RUBY</td><td>WASHINGTON</td><td>RUBY.WASHINGTON@sakilacustomer.org</td><td>1</td><td>1952 Chatsworth Drive</td><td>Meixian</td><td>China</td></tr>
+                <tr><td>91</td><td>LOIS</td><td>BUTLER</td><td>LOIS.BUTLER@sakilacustomer.org</td><td>1</td><td>1370 Le Mans Avenue</td><td>Bandar Seri Begawan</td><td>Brunei</td></tr>
+                <tr><td>105</td><td>DAWN</td><td>SULLIVAN</td><td>DAWN.SULLIVAN@sakilacustomer.org</td><td>1</td><td>454 Nakhon Sawan Boulevard</td><td>Funafuti</td><td>Tuvalu</td></tr>
+                <tr><td>107</td><td>FLORENCE</td><td>WOODS</td><td>FLORENCE.WOODS@sakilacustomer.org</td><td>1</td><td>1532 Dzerzinsk Way</td><td>Merlo</td><td>Argentina</td></tr>
+                <tr><td>109</td><td>EDNA</td><td>WEST</td><td>EDNA.WEST@sakilacustomer.org</td><td>1</td><td>682 Junan Way</td><td>Klerksdorp</td><td>South Africa</td></tr>
+                <tr><td>113</td><td>CINDY</td><td>FISHER</td><td>CINDY.FISHER@sakilacustomer.org</td><td>1</td><td>1079 Tel Aviv-Jaffa Boulevard</td><td>Cumaná</td><td>Venezuela</td></tr>
+                <tr><td>116</td><td>VICTORIA</td><td>GIBSON</td><td>VICTORIA.GIBSON@sakilacustomer.org</td><td>1</td><td>544 Malm Parkway</td><td>Pemalang</td><td>Indonesia</td></tr>
+                <tr><td>121</td><td>JOSEPHINE</td><td>GOMEZ</td><td>JOSEPHINE.GOMEZ@sakilacustomer.org</td><td>1</td><td>211 Chiayi Drive</td><td>Etawah</td><td>India</td></tr>
+                <tr><td>122</td><td>THELMA</td><td>MURRAY</td><td>THELMA.MURRAY@sakilacustomer.org</td><td>1</td><td>1175 Tanauan Way</td><td>Lima</td><td>Peru</td></tr>
+                <tr><td>126</td><td>ELLEN</td><td>SIMPSON</td><td>ELLEN.SIMPSON@sakilacustomer.org</td><td>1</td><td>1666 Qomsheh Drive</td><td>Poá</td><td>Brazil</td></tr>
+                <tr><td>128</td><td>MARJORIE</td><td>TUCKER</td><td>MARJORIE.TUCKER@sakilacustomer.org</td><td>1</td><td>1050 Garden Grove Avenue</td><td>Jastrzebie-Zdrój</td><td>Poland</td></tr>
+                <tr><td>129</td><td>CARRIE</td><td>PORTER</td><td>CARRIE.PORTER@sakilacustomer.org</td><td>1</td><td>1854 Tieli Street</td><td>Liaocheng</td><td>China</td></tr>
+                <tr><td>131</td><td>MONICA</td><td>HICKS</td><td>MONICA.HICKS@sakilacustomer.org</td><td>1</td><td>1752 So Leopoldo Parkway</td><td>Mukatševe</td><td>Ukraine</td></tr>
+                <tr><td>135</td><td>JUANITA</td><td>MASON</td><td>JUANITA.MASON@sakilacustomer.org</td><td>1</td><td>943 Johannesburg Avenue</td><td>Pune</td><td>India</td></tr>
+                <tr><td>138</td><td>HAZEL</td><td>WARREN</td><td>HAZEL.WARREN@sakilacustomer.org</td><td>1</td><td>1587 Sullana Lane</td><td>Hohhot</td><td>China</td></tr>
+                <tr><td>139</td><td>AMBER</td><td>DIXON</td><td>AMBER.DIXON@sakilacustomer.org</td><td>1</td><td>1029 Dzerzinsk Manor</td><td>Touliu</td><td>Taiwan</td></tr>
+                <tr><td>145</td><td>LUCILLE</td><td>HOLMES</td><td>LUCILLE.HOLMES@sakilacustomer.org</td><td>1</td><td>999 Sanaa Loop</td><td>Soshanguve</td><td>South Africa</td></tr>
+                <tr><td>147</td><td>JOANNE</td><td>ROBERTSON</td><td>JOANNE.ROBERTSON@sakilacustomer.org</td><td>1</td><td>1337 Lincoln Parkway</td><td>Urawa</td><td>Japan</td></tr>
+                <tr><td>149</td><td>VALERIE</td><td>BLACK</td><td>VALERIE.BLACK@sakilacustomer.org</td><td>1</td><td>782 Mosul Street</td><td>Brockton</td><td>United States</td></tr>
+                <tr><td>155</td><td>GAIL</td><td>KNIGHT</td><td>GAIL.KNIGHT@sakilacustomer.org</td><td>1</td><td>185 Novi Sad Place</td><td>Bern</td><td>Switzerland</td></tr>
+                <tr><td>157</td><td>DARLENE</td><td>ROSE</td><td>DARLENE.ROSE@sakilacustomer.org</td><td>1</td><td>1386 Nakhon Sawan Boulevard</td><td>Pyongyang</td><td>North Korea</td></tr>
+                <tr><td>158</td><td>VERONICA</td><td>STONE</td><td>VERONICA.STONE@sakilacustomer.org</td><td>1</td><td>369 Papeete Way</td><td>Greensboro</td><td>United States</td></tr>
+                <tr><td>161</td><td>GERALDINE</td><td>PERKINS</td><td>GERALDINE.PERKINS@sakilacustomer.org</td><td>1</td><td>97 Shimoga Avenue</td><td>Tel Aviv-Jaffa</td><td>Israel</td></tr>
+                <tr><td>163</td><td>CATHY</td><td>SPENCER</td><td>CATHY.SPENCER@sakilacustomer.org</td><td>1</td><td>1287 Xi´angfan Boulevard</td><td>Kakamigahara</td><td>Japan</td></tr>
+                <tr><td>166</td><td>LYNN</td><td>PAYNE</td><td>LYNN.PAYNE@sakilacustomer.org</td><td>1</td><td>710 San Felipe del Progreso Avenue</td><td>Lilongwe</td><td>Malawi</td></tr>
+                <tr><td>167</td><td>SALLY</td><td>PIERCE</td><td>SALLY.PIERCE@sakilacustomer.org</td><td>1</td><td>1540 Wroclaw Drive</td><td>Chandrapur</td><td>India</td></tr>
+                <tr><td>170</td><td>BEATRICE</td><td>ARNOLD</td><td>BEATRICE.ARNOLD@sakilacustomer.org</td><td>1</td><td>1877 Ezhou Lane</td><td>Udaipur</td><td>India</td></tr>
+                <tr><td>171</td><td>DOLORES</td><td>WAGNER</td><td>DOLORES.WAGNER@sakilacustomer.org</td><td>1</td><td>316 Uruapan Street</td><td>Ipoh</td><td>Malaysia</td></tr>
+                <tr><td>173</td><td>AUDREY</td><td>RAY</td><td>AUDREY.RAY@sakilacustomer.org</td><td>1</td><td>1010 Klerksdorp Way</td><td>Graz</td><td>Austria</td></tr>
+                <tr><td>186</td><td>HOLLY</td><td>FOX</td><td>HOLLY.FOX@sakilacustomer.org</td><td>1</td><td>435 0 Way</td><td>Haldia</td><td>India</td></tr>
+                <tr><td>190</td><td>YOLANDA</td><td>WEAVER</td><td>YOLANDA.WEAVER@sakilacustomer.org</td><td>1</td><td>605 Rio Claro Parkway</td><td>Tabora</td><td>Tanzania</td></tr>
+                <tr><td>193</td><td>KATIE</td><td>ELLIOTT</td><td>KATIE.ELLIOTT@sakilacustomer.org</td><td>1</td><td>447 Surakarta Loop</td><td>Kisumu</td><td>Kenya</td></tr>
+                <tr><td>201</td><td>VICKI</td><td>FIELDS</td><td>VICKI.FIELDS@sakilacustomer.org</td><td>1</td><td>68 Molodetno Manor</td><td>Witten</td><td>Germany</td></tr>
+                <tr><td>206</td><td>TERRI</td><td>VASQUEZ</td><td>TERRI.VASQUEZ@sakilacustomer.org</td><td>1</td><td>1304 ´s-Hertogenbosch Way</td><td>Blumenau</td><td>Brazil</td></tr>
+                <tr><td>213</td><td>GINA</td><td>WILLIAMSON</td><td>GINA.WILLIAMSON@sakilacustomer.org</td><td>1</td><td>1001 Miyakonojo Lane</td><td>Taizz</td><td>Yemen</td></tr>
+                <tr><td>214</td><td>KRISTIN</td><td>JOHNSTON</td><td>KRISTIN.JOHNSTON@sakilacustomer.org</td><td>1</td><td>226 Brest Manor</td><td>Sunnyvale</td><td>United States</td></tr>
+                <tr><td>220</td><td>CHARLENE</td><td>ALVAREZ</td><td>CHARLENE.ALVAREZ@sakilacustomer.org</td><td>1</td><td>1842 Luzinia Boulevard</td><td>Zanzibar</td><td>Tanzania</td></tr>
+                <tr><td>225</td><td>ARLENE</td><td>HARVEY</td><td>ARLENE.HARVEY@sakilacustomer.org</td><td>1</td><td>1014 Loja Manor</td><td>Ambattur</td><td>India</td></tr>
+                <tr><td>230</td><td>JOY</td><td>GEORGE</td><td>JOY.GEORGE@sakilacustomer.org</td><td>1</td><td>1256 Bislig Boulevard</td><td>Botosani</td><td>Romania</td></tr>
+                <tr><td>231</td><td>GEORGIA</td><td>JACOBS</td><td>GEORGIA.JACOBS@sakilacustomer.org</td><td>1</td><td>954 Kimchon Place</td><td>Uttarpara-Kotrung</td><td>India</td></tr>
+                <tr><td>234</td><td>CLAUDIA</td><td>FULLER</td><td>CLAUDIA.FULLER@sakilacustomer.org</td><td>1</td><td>346 Skikda Parkway</td><td>Jalib al-Shuyukh</td><td>Kuwait</td></tr>
+                <tr><td>240</td><td>MARLENE</td><td>WELCH</td><td>MARLENE.WELCH@sakilacustomer.org</td><td>1</td><td>1148 Saarbrcken Parkway</td><td>Iwaki</td><td>Japan</td></tr>
+                <tr><td>241</td><td>HEIDI</td><td>LARSON</td><td>HEIDI.LARSON@sakilacustomer.org</td><td>0</td><td>1103 Bilbays Parkway</td><td>Xi´angfan</td><td>China</td></tr>
+                <tr><td>244</td><td>VIOLA</td><td>HANSON</td><td>VIOLA.HANSON@sakilacustomer.org</td><td>1</td><td>582 Papeete Loop</td><td>Lapu-Lapu</td><td>Philippines</td></tr>
+                <tr><td>251</td><td>VICKIE</td><td>BREWER</td><td>VICKIE.BREWER@sakilacustomer.org</td><td>1</td><td>1966 Tonghae Street</td><td>Halle/Saale</td><td>Germany</td></tr>
+                <tr><td>253</td><td>TERRY</td><td>CARLSON</td><td>TERRY.CARLSON@sakilacustomer.org</td><td>1</td><td>752 Ondo Loop</td><td>Miyakonojo</td><td>Japan</td></tr>
+                <tr><td>254</td><td>MAXINE</td><td>SILVA</td><td>MAXINE.SILVA@sakilacustomer.org</td><td>1</td><td>1338 Zalantun Lane</td><td>Poços de Caldas</td><td>Brazil</td></tr>
+                <tr><td>256</td><td>MABEL</td><td>HOLLAND</td><td>MABEL.HOLLAND@sakilacustomer.org</td><td>1</td><td>51 Laredo Avenue</td><td>Monywa</td><td>Myanmar</td></tr>
+                <tr><td>258</td><td>MYRTLE</td><td>FLEMING</td><td>MYRTLE.FLEMING@sakilacustomer.org</td><td>1</td><td>532 Toulon Street</td><td>Santiago de los Caballeros</td><td>Dominican Republic</td></tr>
+                <tr><td>260</td><td>CHRISTY</td><td>VARGAS</td><td>CHRISTY.VARGAS@sakilacustomer.org</td><td>1</td><td>1158 Mandi Bahauddin Parkway</td><td>Datong</td><td>China</td></tr>
+                <tr><td>261</td><td>DEANNA</td><td>BYRD</td><td>DEANNA.BYRD@sakilacustomer.org</td><td>1</td><td>862 Xintai Lane</td><td>Tuguegarao</td><td>Philippines</td></tr>
+                <tr><td>262</td><td>PATSY</td><td>DAVIDSON</td><td>PATSY.DAVIDSON@sakilacustomer.org</td><td>1</td><td>816 Cayenne Parkway</td><td>Portoviejo</td><td>Ecuador</td></tr>
+                <tr><td>263</td><td>HILDA</td><td>HOPKINS</td><td>HILDA.HOPKINS@sakilacustomer.org</td><td>1</td><td>1831 Nam Dinh Loop</td><td>Mandaluyong</td><td>Philippines</td></tr>
+                <tr><td>266</td><td>NORA</td><td>HERRERA</td><td>NORA.HERRERA@sakilacustomer.org</td><td>1</td><td>1587 Loja Manor</td><td>Salzburg</td><td>Austria</td></tr>
+                <tr><td>268</td><td>NINA</td><td>SOTO</td><td>NINA.SOTO@sakilacustomer.org</td><td>1</td><td>1519 Ilorin Place</td><td>Palghat (Palakkad)</td><td>India</td></tr>
+                <tr><td>269</td><td>CASSANDRA</td><td>WALTERS</td><td>CASSANDRA.WALTERS@sakilacustomer.org</td><td>1</td><td>920 Kumbakonam Loop</td><td>Salinas</td><td>United States</td></tr>
+                <tr><td>275</td><td>CAROLE</td><td>BARNETT</td><td>CAROLE.BARNETT@sakilacustomer.org</td><td>1</td><td>1980 Kamjanets-Podilskyi Street</td><td>Peoria</td><td>United States</td></tr>
+                <tr><td>276</td><td>BRANDY</td><td>GRAVES</td><td>BRANDY.GRAVES@sakilacustomer.org</td><td>1</td><td>1944 Bamenda Way</td><td>Warren</td><td>United States</td></tr>
+                <tr><td>280</td><td>TRACEY</td><td>BARRETT</td><td>TRACEY.BARRETT@sakilacustomer.org</td><td>1</td><td>1006 Santa Brbara dOeste Manor</td><td>Owo</td><td>Nigeria</td></tr>
+                <tr><td>284</td><td>SONIA</td><td>GREGORY</td><td>SONIA.GREGORY@sakilacustomer.org</td><td>1</td><td>1279 Udine Parkway</td><td>Benin City</td><td>Nigeria</td></tr>
+                <tr><td>286</td><td>VELMA</td><td>LUCAS</td><td>VELMA.LUCAS@sakilacustomer.org</td><td>1</td><td>1155 Liaocheng Place</td><td>Effon-Alaiye</td><td>Nigeria</td></tr>
+                <tr><td>287</td><td>BECKY</td><td>MILES</td><td>BECKY.MILES@sakilacustomer.org</td><td>1</td><td>1993 Tabuk Lane</td><td>Tambaram</td><td>India</td></tr>
+                <tr><td>290</td><td>KRISTINA</td><td>CHAMBERS</td><td>KRISTINA.CHAMBERS@sakilacustomer.org</td><td>1</td><td>544 Tarsus Boulevard</td><td>Valle de la Pascua</td><td>Venezuela</td></tr>
+                <tr><td>292</td><td>MISTY</td><td>LAMBERT</td><td>MISTY.LAMBERT@sakilacustomer.org</td><td>1</td><td>1192 Tongliao Street</td><td>Sharja</td><td>United Arab Emirates</td></tr>
+                <tr><td>294</td><td>SHELLY</td><td>WATTS</td><td>SHELLY.WATTS@sakilacustomer.org</td><td>1</td><td>32 Pudukkottai Lane</td><td>Dayton</td><td>United States</td></tr>
+                <tr><td>296</td><td>RAMONA</td><td>HALE</td><td>RAMONA.HALE@sakilacustomer.org</td><td>1</td><td>951 Stara Zagora Manor</td><td>Patiala</td><td>India</td></tr>
+                <tr><td>297</td><td>SHERRI</td><td>RHODES</td><td>SHERRI.RHODES@sakilacustomer.org</td><td>1</td><td>922 Vila Velha Loop</td><td>Ahmadnagar</td><td>India</td></tr>
+                <tr><td>302</td><td>MICHAEL</td><td>SILVERMAN</td><td>MICHAEL.SILVERMAN@sakilacustomer.org</td><td>1</td><td>1908 Gaziantep Place</td><td>Tiefa</td><td>China</td></tr>
+                <tr><td>304</td><td>DAVID</td><td>ROYAL</td><td>DAVID.ROYAL@sakilacustomer.org</td><td>1</td><td>827 Yuncheng Drive</td><td>Callao</td><td>Peru</td></tr>
+                <tr><td>305</td><td>RICHARD</td><td>MCCRARY</td><td>RICHARD.MCCRARY@sakilacustomer.org</td><td>1</td><td>913 Coacalco de Berriozbal Loop</td><td>Arlington</td><td>United States</td></tr>
+                <tr><td>311</td><td>PAUL</td><td>TROUT</td><td>PAUL.TROUT@sakilacustomer.org</td><td>1</td><td>746 Joliet Lane</td><td>Kursk</td><td>Russian Federation</td></tr>
+                <tr><td>317</td><td>EDWARD</td><td>BAUGH</td><td>EDWARD.BAUGH@sakilacustomer.org</td><td>1</td><td>1359 Zhoushan Parkway</td><td>Tórshavn</td><td>Faroe Islands</td></tr>
+                <tr><td>321</td><td>KEVIN</td><td>SCHULER</td><td>KEVIN.SCHULER@sakilacustomer.org</td><td>1</td><td>470 Boksburg Street</td><td>Birgunj</td><td>Nepal</td></tr>
+                <tr><td>322</td><td>JASON</td><td>MORRISSEY</td><td>JASON.MORRISSEY@sakilacustomer.org</td><td>1</td><td>1427 A Corua (La Corua) Place</td><td>Bahía Blanca</td><td>Argentina</td></tr>
+                <tr><td>323</td><td>MATTHEW</td><td>MAHAN</td><td>MATTHEW.MAHAN@sakilacustomer.org</td><td>1</td><td>479 San Felipe del Progreso Avenue</td><td>Cuautla</td><td>Mexico</td></tr>
+                <tr><td>327</td><td>LARRY</td><td>THRASHER</td><td>LARRY.THRASHER@sakilacustomer.org</td><td>1</td><td>663 Baha Blanca Parkway</td><td>Adana</td><td>Turkey</td></tr>
+                <tr><td>329</td><td>FRANK</td><td>WAGGONER</td><td>FRANK.WAGGONER@sakilacustomer.org</td><td>1</td><td>1816 Bydgoszcz Loop</td><td>Jamalpur</td><td>Bangladesh</td></tr>
+                <tr><td>331</td><td>ERIC</td><td>ROBERT</td><td>ERIC.ROBERT@sakilacustomer.org</td><td>1</td><td>430 Kumbakonam Drive</td><td>Santa Fé</td><td>Argentina</td></tr>
+                <tr><td>332</td><td>STEPHEN</td><td>QUALLS</td><td>STEPHEN.QUALLS@sakilacustomer.org</td><td>1</td><td>1838 Tabriz Lane</td><td>Dhaka</td><td>Bangladesh</td></tr>
+                <tr><td>333</td><td>ANDREW</td><td>PURDY</td><td>ANDREW.PURDY@sakilacustomer.org</td><td>1</td><td>431 Szkesfehrvr Avenue</td><td>Baku</td><td>Azerbaijan</td></tr>
+                <tr><td>336</td><td>JOSHUA</td><td>MARK</td><td>JOSHUA.MARK@sakilacustomer.org</td><td>1</td><td>1920 Weifang Avenue</td><td>Rampur</td><td>India</td></tr>
+                <tr><td>338</td><td>DENNIS</td><td>GILMAN</td><td>DENNIS.GILMAN@sakilacustomer.org</td><td>1</td><td>1443 Mardan Street</td><td>Paarl</td><td>South Africa</td></tr>
+                <tr><td>339</td><td>WALTER</td><td>PERRYMAN</td><td>WALTER.PERRYMAN@sakilacustomer.org</td><td>1</td><td>1909 Benguela Lane</td><td>Xinxiang</td><td>China</td></tr>
+                <tr><td>340</td><td>PATRICK</td><td>NEWSOM</td><td>PATRICK.NEWSOM@sakilacustomer.org</td><td>1</td><td>68 Ponce Parkway</td><td>Hanoi</td><td>Vietnam</td></tr>
+                <tr><td>343</td><td>DOUGLAS</td><td>GRAF</td><td>DOUGLAS.GRAF@sakilacustomer.org</td><td>1</td><td>785 Vaduz Street</td><td>Mexicali</td><td>Mexico</td></tr>
+                <tr><td>356</td><td>GERALD</td><td>FULTZ</td><td>GERALD.FULTZ@sakilacustomer.org</td><td>1</td><td>45 Aparecida de Goinia Place</td><td>Satna</td><td>India</td></tr>
+                <tr><td>375</td><td>AARON</td><td>SELBY</td><td>AARON.SELBY@sakilacustomer.org</td><td>1</td><td>1519 Santiago de los Caballeros Loop</td><td>Mwene-Ditu</td><td>Congo, The Democratic Republic of the</td></tr>
+                <tr><td>376</td><td>RANDY</td><td>GAITHER</td><td>RANDY.GAITHER@sakilacustomer.org</td><td>1</td><td>1618 Olomouc Manor</td><td>Kurgan</td><td>Russian Federation</td></tr>
+                <tr><td>381</td><td>BOBBY</td><td>BOUDREAU</td><td>BOBBY.BOUDREAU@sakilacustomer.org</td><td>1</td><td>1368 Maracabo Boulevard</td><td>South Hill</td><td>Anguilla</td></tr>
+                <tr><td>386</td><td>TODD</td><td>TAN</td><td>TODD.TAN@sakilacustomer.org</td><td>1</td><td>1793 Meixian Place</td><td>Kamjanets-Podilskyi</td><td>Ukraine</td></tr>
+                <tr><td>388</td><td>CRAIG</td><td>MORRELL</td><td>CRAIG.MORRELL@sakilacustomer.org</td><td>1</td><td>717 Changzhou Lane</td><td>Cavite</td><td>Philippines</td></tr>
+                <tr><td>389</td><td>ALAN</td><td>KAHN</td><td>ALAN.KAHN@sakilacustomer.org</td><td>1</td><td>753 Ilorin Avenue</td><td>Emeishan</td><td>China</td></tr>
+                <tr><td>393</td><td>PHILIP</td><td>CAUSEY</td><td>PHILIP.CAUSEY@sakilacustomer.org</td><td>1</td><td>954 Lapu-Lapu Way</td><td>Korolev</td><td>Russian Federation</td></tr>
+                <tr><td>396</td><td>EARL</td><td>SHANKS</td><td>EARL.SHANKS@sakilacustomer.org</td><td>1</td><td>168 Cianjur Manor</td><td>Iwatsuki</td><td>Japan</td></tr>
+                <tr><td>400</td><td>BRYAN</td><td>HARDISON</td><td>BRYAN.HARDISON@sakilacustomer.org</td><td>1</td><td>530 Lausanne Lane</td><td>Dallas</td><td>United States</td></tr>
+                <tr><td>405</td><td>LEONARD</td><td>SCHOFIELD</td><td>LEONARD.SCHOFIELD@sakilacustomer.org</td><td>1</td><td>88 Nagaon Manor</td><td>Tandil</td><td>Argentina</td></tr>
+                <tr><td>406</td><td>NATHAN</td><td>RUNYON</td><td>NATHAN.RUNYON@sakilacustomer.org</td><td>0</td><td>264 Bhimavaram Manor</td><td>Charlotte Amalie</td><td>Virgin Islands, U.S.</td></tr>
+                <tr><td>407</td><td>DALE</td><td>RATCLIFF</td><td>DALE.RATCLIFF@sakilacustomer.org</td><td>1</td><td>1639 Saarbrcken Drive</td><td>Rustenburg</td><td>South Africa</td></tr>
+                <tr><td>408</td><td>MANUEL</td><td>MURRELL</td><td>MANUEL.MURRELL@sakilacustomer.org</td><td>1</td><td>692 Amroha Drive</td><td>Jaffna</td><td>Sri Lanka</td></tr>
+                <tr><td>416</td><td>JEFFERY</td><td>PINSON</td><td>JEFFERY.PINSON@sakilacustomer.org</td><td>1</td><td>966 Arecibo Loop</td><td>Dadu</td><td>Pakistan</td></tr>
+                <tr><td>417</td><td>TRAVIS</td><td>ESTEP</td><td>TRAVIS.ESTEP@sakilacustomer.org</td><td>1</td><td>289 Santo Andr Manor</td><td>al-Qatif</td><td>Saudi Arabia</td></tr>
+                <tr><td>418</td><td>JEFF</td><td>EAST</td><td>JEFF.EAST@sakilacustomer.org</td><td>1</td><td>437 Chungho Drive</td><td>San Felipe de Puerto Plata</td><td>Dominican Republic</td></tr>
+                <tr><td>421</td><td>LEE</td><td>HAWKS</td><td>LEE.HAWKS@sakilacustomer.org</td><td>1</td><td>1661 Abha Drive</td><td>Pudukkottai</td><td>India</td></tr>
+                <tr><td>423</td><td>ALFRED</td><td>CASILLAS</td><td>ALFRED.CASILLAS@sakilacustomer.org</td><td>1</td><td>1727 Matamoros Place</td><td>Sawhaj</td><td>Egypt</td></tr>
+                <tr><td>424</td><td>KYLE</td><td>SPURLOCK</td><td>KYLE.SPURLOCK@sakilacustomer.org</td><td>1</td><td>1269 Botosani Manor</td><td>Shanwei</td><td>China</td></tr>
+                <tr><td>426</td><td>BRADLEY</td><td>MOTLEY</td><td>BRADLEY.MOTLEY@sakilacustomer.org</td><td>1</td><td>1596 Acua Parkway</td><td>Purnea (Purnia)</td><td>India</td></tr>
+                <tr><td>427</td><td>JESUS</td><td>MCCARTNEY</td><td>JESUS.MCCARTNEY@sakilacustomer.org</td><td>1</td><td>259 Ipoh Drive</td><td>Guarujá</td><td>Brazil</td></tr>
+                <tr><td>432</td><td>EDWIN</td><td>BURK</td><td>EDWIN.BURK@sakilacustomer.org</td><td>1</td><td>1766 Almirante Brown Street</td><td>Newcastle</td><td>South Africa</td></tr>
+                <tr><td>434</td><td>EDDIE</td><td>TOMLIN</td><td>EDDIE.TOMLIN@sakilacustomer.org</td><td>1</td><td>1351 Aparecida de Goinia Parkway</td><td>Ozamis</td><td>Philippines</td></tr>
+                <tr><td>441</td><td>MARIO</td><td>CHEATHAM</td><td>MARIO.CHEATHAM@sakilacustomer.org</td><td>1</td><td>1924 Shimonoseki Drive</td><td>Batna</td><td>Algeria</td></tr>
+                <tr><td>442</td><td>LEROY</td><td>BUSTAMANTE</td><td>LEROY.BUSTAMANTE@sakilacustomer.org</td><td>1</td><td>105 Dzerzinsk Manor</td><td>Tongliao</td><td>China</td></tr>
+                <tr><td>444</td><td>MARCUS</td><td>HIDALGO</td><td>MARCUS.HIDALGO@sakilacustomer.org</td><td>1</td><td>1289 Belm Boulevard</td><td>Tartu</td><td>Estonia</td></tr>
+                <tr><td>446</td><td>THEODORE</td><td>CULP</td><td>THEODORE.CULP@sakilacustomer.org</td><td>0</td><td>1704 Tambaram Manor</td><td>Uluberia</td><td>India</td></tr>
+                <tr><td>447</td><td>CLIFFORD</td><td>BOWENS</td><td>CLIFFORD.BOWENS@sakilacustomer.org</td><td>1</td><td>207 Cuernavaca Loop</td><td>Nabereznyje Tšelny</td><td>Russian Federation</td></tr>
+                <tr><td>451</td><td>JIM</td><td>REA</td><td>JIM.REA@sakilacustomer.org</td><td>1</td><td>814 Simferopol Loop</td><td>El Fuerte</td><td>Mexico</td></tr>
+                <tr><td>452</td><td>TOM</td><td>MILNER</td><td>TOM.MILNER@sakilacustomer.org</td><td>1</td><td>535 Ahmadnagar Manor</td><td>Abu Dhabi</td><td>United Arab Emirates</td></tr>
+                <tr><td>453</td><td>CALVIN</td><td>MARTEL</td><td>CALVIN.MARTEL@sakilacustomer.org</td><td>1</td><td>138 Caracas Boulevard</td><td>Maracaíbo</td><td>Venezuela</td></tr>
+                <tr><td>457</td><td>BILL</td><td>GAVIN</td><td>BILL.GAVIN@sakilacustomer.org</td><td>1</td><td>1485 Bratislava Place</td><td>Rockford</td><td>United States</td></tr>
+                <tr><td>460</td><td>LEON</td><td>BOSTIC</td><td>LEON.BOSTIC@sakilacustomer.org</td><td>1</td><td>734 Tanshui Avenue</td><td>Florencia</td><td>Colombia</td></tr>
+                <tr><td>471</td><td>DEAN</td><td>SAUER</td><td>DEAN.SAUER@sakilacustomer.org</td><td>1</td><td>270 Tambaram Parkway</td><td>Johannesburg</td><td>South Africa</td></tr>
+                <tr><td>477</td><td>DAN</td><td>PAINE</td><td>DAN.PAINE@sakilacustomer.org</td><td>1</td><td>808 Naala-Porto Parkway</td><td>Stockport</td><td>United Kingdom</td></tr>
+                <tr><td>481</td><td>HERMAN</td><td>DEVORE</td><td>HERMAN.DEVORE@sakilacustomer.org</td><td>1</td><td>64 Korla Street</td><td>Mwanza</td><td>Tanzania</td></tr>
+                <tr><td>485</td><td>CLYDE</td><td>TOBIAS</td><td>CLYDE.TOBIAS@sakilacustomer.org</td><td>1</td><td>1909 Dayton Avenue</td><td>Shaoguan</td><td>China</td></tr>
+                <tr><td>486</td><td>GLEN</td><td>TALBERT</td><td>GLEN.TALBERT@sakilacustomer.org</td><td>1</td><td>1789 Saint-Denis Parkway</td><td>Acuña</td><td>Mexico</td></tr>
+                <tr><td>487</td><td>HECTOR</td><td>POINDEXTER</td><td>HECTOR.POINDEXTER@sakilacustomer.org</td><td>1</td><td>185 Mannheim Lane</td><td>Pjatigorsk</td><td>Russian Federation</td></tr>
+                <tr><td>490</td><td>SAM</td><td>MCDUFFIE</td><td>SAM.MCDUFFIE@sakilacustomer.org</td><td>1</td><td>656 Matamoros Drive</td><td>Sogamoso</td><td>Colombia</td></tr>
+                <tr><td>491</td><td>RICK</td><td>MATTOX</td><td>RICK.MATTOX@sakilacustomer.org</td><td>1</td><td>775 ostka Drive</td><td>Mit Ghamr</td><td>Egypt</td></tr>
+                <tr><td>493</td><td>BRENT</td><td>HARKINS</td><td>BRENT.HARKINS@sakilacustomer.org</td><td>1</td><td>319 Plock Parkway</td><td>Sultanbeyli</td><td>Turkey</td></tr>
+                <tr><td>495</td><td>CHARLIE</td><td>BESS</td><td>CHARLIE.BESS@sakilacustomer.org</td><td>1</td><td>362 Rajkot Lane</td><td>Baiyin</td><td>China</td></tr>
+                <tr><td>497</td><td>GILBERT</td><td>SLEDGE</td><td>GILBERT.SLEDGE@sakilacustomer.org</td><td>1</td><td>1515 Korla Way</td><td>York</td><td>United Kingdom</td></tr>
+                <tr><td>499</td><td>MARC</td><td>OUTLAW</td><td>MARC.OUTLAW@sakilacustomer.org</td><td>1</td><td>1 Valle de Santiago Avenue</td><td>Brindisi</td><td>Italy</td></tr>
+                <tr><td>500</td><td>REGINALD</td><td>KINDER</td><td>REGINALD.KINDER@sakilacustomer.org</td><td>1</td><td>519 Brescia Parkway</td><td>Madiun</td><td>Indonesia</td></tr>
+                <tr><td>503</td><td>ANGEL</td><td>BARCLAY</td><td>ANGEL.BARCLAY@sakilacustomer.org</td><td>1</td><td>496 Celaya Drive</td><td>Ueda</td><td>Japan</td></tr>
+                <tr><td>508</td><td>MILTON</td><td>HOWLAND</td><td>MILTON.HOWLAND@sakilacustomer.org</td><td>1</td><td>758 Korolev Parkway</td><td>Vijayawada</td><td>India</td></tr>
+                <tr><td>510</td><td>BEN</td><td>EASTER</td><td>BEN.EASTER@sakilacustomer.org</td><td>0</td><td>886 Tonghae Place</td><td>Kamyšin</td><td>Russian Federation</td></tr>
+                <tr><td>512</td><td>CECIL</td><td>VINES</td><td>CECIL.VINES@sakilacustomer.org</td><td>1</td><td>548 Uruapan Street</td><td>London</td><td>United Kingdom</td></tr>
+                <tr><td>515</td><td>ANDRE</td><td>RAPP</td><td>ANDRE.RAPP@sakilacustomer.org</td><td>1</td><td>568 Dhule (Dhulia) Loop</td><td>Coquimbo</td><td>Chile</td></tr>
+                <tr><td>518</td><td>GABRIEL</td><td>HARDER</td><td>GABRIEL.HARDER@sakilacustomer.org</td><td>1</td><td>680 A Corua (La Corua) Manor</td><td>Sivas</td><td>Turkey</td></tr>
+                <tr><td>528</td><td>CLAUDE</td><td>HERZOG</td><td>CLAUDE.HERZOG@sakilacustomer.org</td><td>1</td><td>486 Ondo Parkway</td><td>Benguela</td><td>Angola</td></tr>
+                <tr><td>529</td><td>ERIK</td><td>GUILLEN</td><td>ERIK.GUILLEN@sakilacustomer.org</td><td>1</td><td>635 Brest Manor</td><td>Bhimavaram</td><td>India</td></tr>
+                <tr><td>531</td><td>JAMIE</td><td>WAUGH</td><td>JAMIE.WAUGH@sakilacustomer.org</td><td>1</td><td>958 Sagamihara Lane</td><td>Kuwana</td><td>Japan</td></tr>
+                <tr><td>536</td><td>FERNANDO</td><td>CHURCHILL</td><td>FERNANDO.CHURCHILL@sakilacustomer.org</td><td>1</td><td>193 Bhusawal Place</td><td>Tonghae</td><td>South Korea</td></tr>
+                <tr><td>538</td><td>TED</td><td>BREAUX</td><td>TED.BREAUX@sakilacustomer.org</td><td>1</td><td>183 Haiphong Street</td><td>Baicheng</td><td>China</td></tr>
+                <tr><td>540</td><td>TYRONE</td><td>ASHER</td><td>TYRONE.ASHER@sakilacustomer.org</td><td>1</td><td>191 Jos Azueta Parkway</td><td>Ruse</td><td>Bulgaria</td></tr>
+                <tr><td>541</td><td>DARREN</td><td>WINDHAM</td><td>DARREN.WINDHAM@sakilacustomer.org</td><td>1</td><td>379 Lublin Parkway</td><td>Livorno</td><td>Italy</td></tr>
+                <tr><td>559</td><td>EVERETT</td><td>BANDA</td><td>EVERETT.BANDA@sakilacustomer.org</td><td>1</td><td>1741 Hoshiarpur Boulevard</td><td>Bilbays</td><td>Egypt</td></tr>
+                <tr><td>562</td><td>WALLACE</td><td>SLONE</td><td>WALLACE.SLONE@sakilacustomer.org</td><td>1</td><td>1342 Sharja Way</td><td>Sokoto</td><td>Nigeria</td></tr>
+                <tr><td>563</td><td>KEN</td><td>PREWITT</td><td>KEN.PREWITT@sakilacustomer.org</td><td>1</td><td>1342 Abha Boulevard</td><td>Bucuresti</td><td>Romania</td></tr>
+                <tr><td>565</td><td>JAIME</td><td>NETTLES</td><td>JAIME.NETTLES@sakilacustomer.org</td><td>1</td><td>1746 Faaa Way</td><td>Huánuco</td><td>Peru</td></tr>
+                <tr><td>571</td><td>JOHNNIE</td><td>CHISHOLM</td><td>JOHNNIE.CHISHOLM@sakilacustomer.org</td><td>1</td><td>1501 Pangkal Pinang Avenue</td><td>Plock</td><td>Poland</td></tr>
+                <tr><td>572</td><td>SIDNEY</td><td>BURLESON</td><td>SIDNEY.BURLESON@sakilacustomer.org</td><td>1</td><td>1405 Hagonoy Avenue</td><td>Czestochowa</td><td>Poland</td></tr>
+                <tr><td>573</td><td>BYRON</td><td>BOX</td><td>BYRON.BOX@sakilacustomer.org</td><td>1</td><td>521 San Juan Bautista Tuxtepec Place</td><td>Zhezqazghan</td><td>Kazakstan</td></tr>
+                <tr><td>574</td><td>JULIAN</td><td>VEST</td><td>JULIAN.VEST@sakilacustomer.org</td><td>1</td><td>923 Tangail Boulevard</td><td>Akishima</td><td>Japan</td></tr>
+                <tr><td>575</td><td>ISAAC</td><td>OGLESBY</td><td>ISAAC.OGLESBY@sakilacustomer.org</td><td>1</td><td>186 Skikda Lane</td><td>Cuernavaca</td><td>Mexico</td></tr>
+                <tr><td>577</td><td>CLIFTON</td><td>MALCOLM</td><td>CLIFTON.MALCOLM@sakilacustomer.org</td><td>1</td><td>1489 Kakamigahara Lane</td><td>Tanshui</td><td>Taiwan</td></tr>
+                <tr><td>579</td><td>DARYL</td><td>LARUE</td><td>DARYL.LARUE@sakilacustomer.org</td><td>1</td><td>1208 Tama Loop</td><td>Mosul</td><td>Iraq</td></tr>
+                <tr><td>581</td><td>VIRGIL</td><td>WOFFORD</td><td>VIRGIL.WOFFORD@sakilacustomer.org</td><td>1</td><td>760 Miyakonojo Drive</td><td>José Azueta</td><td>Mexico</td></tr>
+                <tr><td>582</td><td>ANDY</td><td>VANHORN</td><td>ANDY.VANHORN@sakilacustomer.org</td><td>1</td><td>966 Asuncin Way</td><td>Huejutla de Reyes</td><td>Mexico</td></tr>
+                <tr><td>583</td><td>MARSHALL</td><td>THORN</td><td>MARSHALL.THORN@sakilacustomer.org</td><td>1</td><td>1584 Ljubertsy Lane</td><td>Southampton</td><td>United Kingdom</td></tr>
+                <tr><td>584</td><td>SALVADOR</td><td>TEEL</td><td>SALVADOR.TEEL@sakilacustomer.org</td><td>1</td><td>247 Jining Parkway</td><td>Banjul</td><td>Gambia</td></tr>
+                <tr><td>585</td><td>PERRY</td><td>SWAFFORD</td><td>PERRY.SWAFFORD@sakilacustomer.org</td><td>1</td><td>773 Dallas Manor</td><td>Quilmes</td><td>Argentina</td></tr>
+                <tr><td>587</td><td>SERGIO</td><td>STANFIELD</td><td>SERGIO.STANFIELD@sakilacustomer.org</td><td>1</td><td>1402 Zanzibar Boulevard</td><td>Celaya</td><td>Mexico</td></tr>
+                <tr><td>588</td><td>MARION</td><td>OCAMPO</td><td>MARION.OCAMPO@sakilacustomer.org</td><td>1</td><td>1464 Kursk Parkway</td><td>Weifang</td><td>China</td></tr>
+                <tr><td>589</td><td>TRACY</td><td>HERRMANN</td><td>TRACY.HERRMANN@sakilacustomer.org</td><td>1</td><td>1074 Sanaa Parkway</td><td>Loja</td><td>Ecuador</td></tr>
+                <tr><td>590</td><td>SETH</td><td>HANNON</td><td>SETH.HANNON@sakilacustomer.org</td><td>1</td><td>1759 Niznekamsk Avenue</td><td>al-Manama</td><td>Bahrain</td></tr>
+                <tr><td>592</td><td>TERRANCE</td><td>ROUSH</td><td>TERRANCE.ROUSH@sakilacustomer.org</td><td>0</td><td>42 Fontana Avenue</td><td>Székesfehérvár</td><td>Hungary</td></tr>
+                <tr><td>593</td><td>RENE</td><td>MCALISTER</td><td>RENE.MCALISTER@sakilacustomer.org</td><td>1</td><td>1895 Zhezqazghan Drive</td><td>Garden Grove</td><td>United States</td></tr>
+                <tr><td>594</td><td>EDUARDO</td><td>HIATT</td><td>EDUARDO.HIATT@sakilacustomer.org</td><td>1</td><td>1837 Kaduna Parkway</td><td>Jining</td><td>China</td></tr>
+                <tr><td>595</td><td>TERRENCE</td><td>GUNDERSON</td><td>TERRENCE.GUNDERSON@sakilacustomer.org</td><td>1</td><td>844 Bucuresti Place</td><td>Jinzhou</td><td>China</td></tr>
+            </table>
+            <div class="stats">
+                <h3>📊 Cluster Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stats-item"><div class="stats-label">Avg Total Rentals</div><div class="stats-value">28.09</div></div>
+                    <div class="stats-item"><div class="stats-label">Avg Unique Films</div><div class="stats-value">27.64</div></div>
+                    <div class="stats-item"><div class="stats-label">Avg Total Payment</div><div class="stats-value">$117.93</div></div>
+                    <div class="stats-item"><div class="stats-label">Avg Categories</div><div class="stats-value">13.20</div></div>
+                </div>
+            </div>
+        </div>
+        <div class="cluster-section" id="cluster-2">
+            <div class="cluster-header">
+                <h2>🎯 Cluster 3 - Total Customers: 17</h2>
+            </div>
+            <table>
+                <tr><th>Customer Id</th><th>First Name</th><th>Last Name</th><th>Email</th><th>Active</th><th>Address</th><th>City</th><th>Country</th></tr>
+                <tr><td>50</td><td>DIANE</td><td>COLLINS</td><td>DIANE.COLLINS@sakilacustomer.org</td><td>1</td><td>115 Hidalgo Parkway</td><td>Omdurman</td><td>Sudan</td></tr>
+                <tr><td>137</td><td>RHONDA</td><td>KENNEDY</td><td>RHONDA.KENNEDY@sakilacustomer.org</td><td>1</td><td>1749 Daxian Place</td><td>Apeldoorn</td><td>Netherlands</td></tr>
+                <tr><td>144</td><td>CLARA</td><td>SHAW</td><td>CLARA.SHAW@sakilacustomer.org</td><td>1</td><td>1027 Songkhla Manor</td><td>Molodetšno</td><td>Belarus</td></tr>
+                <tr><td>148</td><td>ELEANOR</td><td>HUNT</td><td>ELEANOR.HUNT@sakilacustomer.org</td><td>1</td><td>1952 Pune Lane</td><td>Saint-Denis</td><td>Réunion</td></tr>
+                <tr><td>176</td><td>JUNE</td><td>CARROLL</td><td>JUNE.CARROLL@sakilacustomer.org</td><td>1</td><td>757 Rustenburg Avenue</td><td>Skikda</td><td>Algeria</td></tr>
+                <tr><td>178</td><td>MARION</td><td>SNYDER</td><td>MARION.SNYDER@sakilacustomer.org</td><td>1</td><td>1891 Rizhao Boulevard</td><td>Santa Brbara dOeste</td><td>Brazil</td></tr>
+                <tr><td>181</td><td>ANA</td><td>BRADLEY</td><td>ANA.BRADLEY@sakilacustomer.org</td><td>1</td><td>682 Garden Grove Place</td><td>Memphis</td><td>United States</td></tr>
+                <tr><td>236</td><td>MARCIA</td><td>DEAN</td><td>MARCIA.DEAN@sakilacustomer.org</td><td>1</td><td>1479 Rustenburg Boulevard</td><td>Tanza</td><td>Philippines</td></tr>
+                <tr><td>259</td><td>LENA</td><td>JENSEN</td><td>LENA.JENSEN@sakilacustomer.org</td><td>1</td><td>1027 Banjul Place</td><td>Halisahar</td><td>India</td></tr>
+                <tr><td>295</td><td>DAISY</td><td>BATES</td><td>DAISY.BATES@sakilacustomer.org</td><td>1</td><td>661 Chisinau Lane</td><td>Kolpino</td><td>Russian Federation</td></tr>
+                <tr><td>403</td><td>MIKE</td><td>WAY</td><td>MIKE.WAY@sakilacustomer.org</td><td>1</td><td>990 Etawah Loop</td><td>Valparai</td><td>India</td></tr>
+                <tr><td>410</td><td>CURTIS</td><td>IRBY</td><td>CURTIS.IRBY@sakilacustomer.org</td><td>1</td><td>432 Garden Grove Street</td><td>Richmond Hill</td><td>Canada</td></tr>
+                <tr><td>459</td><td>TOMMY</td><td>COLLAZO</td><td>TOMMY.COLLAZO@sakilacustomer.org</td><td>1</td><td>76 Kermanshah Manor</td><td>Qomsheh</td><td>Iran</td></tr>
+                <tr><td>468</td><td>TIM</td><td>CARY</td><td>TIM.CARY@sakilacustomer.org</td><td>1</td><td>1257 Guadalajara Street</td><td>Bijapur</td><td>India</td></tr>
+                <tr><td>469</td><td>WESLEY</td><td>BULL</td><td>WESLEY.BULL@sakilacustomer.org</td><td>1</td><td>1469 Plock Lane</td><td>Ourense (Orense)</td><td>Spain</td></tr>
+                <tr><td>522</td><td>ARNOLD</td><td>HAVENS</td><td>ARNOLD.HAVENS@sakilacustomer.org</td><td>1</td><td>1176 Southend-on-Sea Manor</td><td>Santa Rosa</td><td>Philippines</td></tr>
+                <tr><td>526</td><td>KARL</td><td>SEAL</td><td>KARL.SEAL@sakilacustomer.org</td><td>1</td><td>1427 Tabuk Place</td><td>Cape Coral</td><td>United States</td></tr>
+            </table>
+            <div class="stats">
+                <h3>📊 Cluster Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stats-item"><div class="stats-label">Avg Total Rentals</div><div class="stats-value">38.35</div></div>
+                    <div class="stats-item"><div class="stats-label">Avg Unique Films</div><div class="stats-value">37.71</div></div>
+                    <div class="stats-item"><div class="stats-label">Avg Total Payment</div><div class="stats-value">$181.73</div></div>
+                    <div class="stats-item"><div class="stats-label">Avg Categories</div><div class="stats-value">14.59</div></div>
+                </div>
+            </div>
+        </div>
+        <div class="cluster-section" id="cluster-3">
+            <div class="cluster-header">
+                <h2>🎯 Cluster 4 - Total Customers: 78</h2>
+            </div>
+            <table>
+                <tr><th>Customer Id</th><th>First Name</th><th>Last Name</th><th>Email</th><th>Active</th><th>Address</th><th>City</th><th>Country</th></tr>
+                <tr><td>4</td><td>BARBARA</td><td>JONES</td><td>BARBARA.JONES@sakilacustomer.org</td><td>1</td><td>1566 Inegl Manor</td><td>Myingyan</td><td>Myanmar</td></tr>
+                <tr><td>48</td><td>ANN</td><td>EVANS</td><td>ANN.EVANS@sakilacustomer.org</td><td>1</td><td>909 Garland Manor</td><td>Niznekamsk</td><td>Russian Federation</td></tr>
+                <tr><td>61</td><td>KATHERINE</td><td>RIVERA</td><td>KATHERINE.RIVERA@sakilacustomer.org</td><td>1</td><td>915 Ponce Place</td><td>Basel</td><td>Switzerland</td></tr>
+                <tr><td>62</td><td>JOAN</td><td>COOPER</td><td>JOAN.COOPER@sakilacustomer.org</td><td>1</td><td>1717 Guadalajara Lane</td><td>Saint Louis</td><td>United States</td></tr>
+                <tr><td>70</td><td>CHRISTINA</td><td>RAMIREZ</td><td>CHRISTINA.RAMIREZ@sakilacustomer.org</td><td>1</td><td>1124 Buenaventura Drive</td><td>al-Hawiya</td><td>Saudi Arabia</td></tr>
+                <tr><td>76</td><td>IRENE</td><td>PRICE</td><td>IRENE.PRICE@sakilacustomer.org</td><td>1</td><td>602 Paarl Street</td><td>Pavlodar</td><td>Kazakstan</td></tr>
+                <tr><td>79</td><td>RACHEL</td><td>BARNES</td><td>RACHEL.BARNES@sakilacustomer.org</td><td>1</td><td>586 Tete Way</td><td>Kamakura</td><td>Japan</td></tr>
+                <tr><td>94</td><td>NORMA</td><td>GONZALES</td><td>NORMA.GONZALES@sakilacustomer.org</td><td>1</td><td>152 Kitwe Parkway</td><td>Bislig</td><td>Philippines</td></tr>
+                <tr><td>95</td><td>PAULA</td><td>BRYANT</td><td>PAULA.BRYANT@sakilacustomer.org</td><td>1</td><td>1697 Tanauan Lane</td><td>Pathankot</td><td>India</td></tr>
+                <tr><td>97</td><td>ANNIE</td><td>RUSSELL</td><td>ANNIE.RUSSELL@sakilacustomer.org</td><td>1</td><td>1599 Plock Drive</td><td>Tete</td><td>Mozambique</td></tr>
+                <tr><td>110</td><td>TIFFANY</td><td>JORDAN</td><td>TIFFANY.JORDAN@sakilacustomer.org</td><td>1</td><td>804 Elista Drive</td><td>Enshi</td><td>China</td></tr>
+                <tr><td>117</td><td>EDITH</td><td>MCDONALD</td><td>EDITH.MCDONALD@sakilacustomer.org</td><td>1</td><td>1967 Sincelejo Place</td><td>Gandhinagar</td><td>India</td></tr>
+                <tr><td>118</td><td>KIM</td><td>CRUZ</td><td>KIM.CRUZ@sakilacustomer.org</td><td>1</td><td>333 Goinia Way</td><td>Grand Prairie</td><td>United States</td></tr>
+                <tr><td>124</td><td>SHEILA</td><td>WELLS</td><td>SHEILA.WELLS@sakilacustomer.org</td><td>0</td><td>848 Tafuna Manor</td><td>Kütahya</td><td>Turkey</td></tr>
+                <tr><td>136</td><td>ANITA</td><td>MORALES</td><td>ANITA.MORALES@sakilacustomer.org</td><td>1</td><td>788 Atinsk Street</td><td>Hubli-Dharwad</td><td>India</td></tr>
+                <tr><td>140</td><td>EVA</td><td>RAMOS</td><td>EVA.RAMOS@sakilacustomer.org</td><td>1</td><td>1666 Beni-Mellal Place</td><td>Clarksville</td><td>United States</td></tr>
+                <tr><td>152</td><td>ALICIA</td><td>MILLS</td><td>ALICIA.MILLS@sakilacustomer.org</td><td>1</td><td>1963 Moscow Place</td><td>Nagaon</td><td>India</td></tr>
+                <tr><td>159</td><td>JILL</td><td>HAWKINS</td><td>JILL.HAWKINS@sakilacustomer.org</td><td>1</td><td>1440 Compton Place</td><td>Linz</td><td>Austria</td></tr>
+                <tr><td>162</td><td>LAUREN</td><td>HUDSON</td><td>LAUREN.HUDSON@sakilacustomer.org</td><td>1</td><td>1740 Le Mans Loop</td><td>Le Mans</td><td>France</td></tr>
+                <tr><td>164</td><td>JOANN</td><td>GARDNER</td><td>JOANN.GARDNER@sakilacustomer.org</td><td>1</td><td>842 Salzburg Lane</td><td>Tarsus</td><td>Turkey</td></tr>
+                <tr><td>177</td><td>SAMANTHA</td><td>DUNCAN</td><td>SAMANTHA.DUNCAN@sakilacustomer.org</td><td>1</td><td>146 Johannesburg Way</td><td>Matamoros</td><td>Mexico</td></tr>
+                <tr><td>183</td><td>IDA</td><td>ANDREWS</td><td>IDA.ANDREWS@sakilacustomer.org</td><td>1</td><td>1839 Szkesfehrvr Parkway</td><td>Luziânia</td><td>Brazil</td></tr>
+                <tr><td>185</td><td>ROBERTA</td><td>HARPER</td><td>ROBERTA.HARPER@sakilacustomer.org</td><td>1</td><td>927 Barcelona Street</td><td>Shahr-e Kord</td><td>Iran</td></tr>
+                <tr><td>191</td><td>JEANETTE</td><td>GREENE</td><td>JEANETTE.GREENE@sakilacustomer.org</td><td>1</td><td>1077 San Felipe de Puerto Plata Place</td><td>Novotšerkassk</td><td>Russian Federation</td></tr>
+                <tr><td>205</td><td>EILEEN</td><td>CARR</td><td>EILEEN.CARR@sakilacustomer.org</td><td>1</td><td>1679 Antofagasta Street</td><td>Ciudad del Este</td><td>Paraguay</td></tr>
+                <tr><td>218</td><td>VERA</td><td>MCCOY</td><td>VERA.MCCOY@sakilacustomer.org</td><td>1</td><td>1168 Najafabad Parkway</td><td>Kabul</td><td>Afghanistan</td></tr>
+                <tr><td>223</td><td>MELINDA</td><td>FERNANDEZ</td><td>MELINDA.FERNANDEZ@sakilacustomer.org</td><td>1</td><td>1820 Maring Parkway</td><td>Mandi Bahauddin</td><td>Pakistan</td></tr>
+                <tr><td>224</td><td>PEARL</td><td>GARZA</td><td>PEARL.GARZA@sakilacustomer.org</td><td>1</td><td>60 Poos de Caldas Street</td><td>Jodhpur</td><td>India</td></tr>
+                <tr><td>243</td><td>LYDIA</td><td>BURKE</td><td>LYDIA.BURKE@sakilacustomer.org</td><td>1</td><td>1483 Pathankot Street</td><td>San Miguel de Tucumán</td><td>Argentina</td></tr>
+                <tr><td>248</td><td>CAROLINE</td><td>BOWMAN</td><td>CAROLINE.BOWMAN@sakilacustomer.org</td><td>1</td><td>1309 Weifang Street</td><td>Tallahassee</td><td>United States</td></tr>
+                <tr><td>250</td><td>JO</td><td>FOWLER</td><td>JO.FOWLER@sakilacustomer.org</td><td>1</td><td>786 Stara Zagora Way</td><td>Oyo</td><td>Nigeria</td></tr>
+                <tr><td>252</td><td>MATTIE</td><td>HOFFMAN</td><td>MATTIE.HOFFMAN@sakilacustomer.org</td><td>1</td><td>1497 Yuzhou Drive</td><td>London</td><td>United Kingdom</td></tr>
+                <tr><td>255</td><td>IRMA</td><td>PEARSON</td><td>IRMA.PEARSON@sakilacustomer.org</td><td>1</td><td>127 Iwakuni Boulevard</td><td>Hagonoy</td><td>Philippines</td></tr>
+                <tr><td>271</td><td>PENNY</td><td>NEAL</td><td>PENNY.NEAL@sakilacustomer.org</td><td>0</td><td>1675 Xi´angfan Manor</td><td>Kumbakonam</td><td>India</td></tr>
+                <tr><td>281</td><td>LEONA</td><td>OBRIEN</td><td>LEONA.OBRIEN@sakilacustomer.org</td><td>1</td><td>1308 Sumy Loop</td><td>Fuzhou</td><td>China</td></tr>
+                <tr><td>288</td><td>BOBBIE</td><td>CRAIG</td><td>BOBBIE.CRAIG@sakilacustomer.org</td><td>1</td><td>86 Higashiosaka Lane</td><td>Valle de Santiago</td><td>Mexico</td></tr>
+                <tr><td>315</td><td>KENNETH</td><td>GOODEN</td><td>KENNETH.GOODEN@sakilacustomer.org</td><td>0</td><td>1542 Lubumbashi Boulevard</td><td>Bat Yam</td><td>Israel</td></tr>
+                <tr><td>318</td><td>BRIAN</td><td>WYMAN</td><td>BRIAN.WYMAN@sakilacustomer.org</td><td>1</td><td>1769 Iwaki Lane</td><td>Bydgoszcz</td><td>Poland</td></tr>
+                <tr><td>320</td><td>ANTHONY</td><td>SCHWAB</td><td>ANTHONY.SCHWAB@sakilacustomer.org</td><td>1</td><td>1892 Nabereznyje Telny Lane</td><td>Tafuna</td><td>American Samoa</td></tr>
+                <tr><td>335</td><td>GREGORY</td><td>MAULDIN</td><td>GREGORY.MAULDIN@sakilacustomer.org</td><td>1</td><td>507 Smolensk Loop</td><td>Sousse</td><td>Tunisia</td></tr>
+                <tr><td>344</td><td>HENRY</td><td>BILLINGSLEY</td><td>HENRY.BILLINGSLEY@sakilacustomer.org</td><td>1</td><td>1516 Escobar Drive</td><td>Nuku´alofa</td><td>Tonga</td></tr>
+                <tr><td>350</td><td>JUAN</td><td>FRALEY</td><td>JUAN.FRALEY@sakilacustomer.org</td><td>1</td><td>469 Nakhon Sawan Street</td><td>Tšeboksary</td><td>Russian Federation</td></tr>
+                <tr><td>353</td><td>JONATHAN</td><td>SCARBOROUGH</td><td>JONATHAN.SCARBOROUGH@sakilacustomer.org</td><td>1</td><td>1698 Southport Loop</td><td>Pachuca de Soto</td><td>Mexico</td></tr>
+                <tr><td>355</td><td>TERRY</td><td>GRISSOM</td><td>TERRY.GRISSOM@sakilacustomer.org</td><td>1</td><td>619 Hunuco Avenue</td><td>Matsue</td><td>Japan</td></tr>
+                <tr><td>358</td><td>SAMUEL</td><td>MARLOW</td><td>SAMUEL.MARLOW@sakilacustomer.org</td><td>1</td><td>604 Bern Place</td><td>Ranchi</td><td>India</td></tr>
+                <tr><td>370</td><td>WAYNE</td><td>TRUONG</td><td>WAYNE.TRUONG@sakilacustomer.org</td><td>1</td><td>1049 Matamoros Parkway</td><td>Gulbarga</td><td>India</td></tr>
+                <tr><td>378</td><td>EUGENE</td><td>CULPEPPER</td><td>EUGENE.CULPEPPER@sakilacustomer.org</td><td>1</td><td>686 Donostia-San Sebastin Lane</td><td>Shenzhen</td><td>China</td></tr>
+                <tr><td>394</td><td>CHRIS</td><td>BROTHERS</td><td>CHRIS.BROTHERS@sakilacustomer.org</td><td>1</td><td>331 Bydgoszcz Parkway</td><td>Gijón</td><td>Spain</td></tr>
+                <tr><td>395</td><td>JOHNNY</td><td>TURPIN</td><td>JOHNNY.TURPIN@sakilacustomer.org</td><td>1</td><td>1152 Citrus Heights Manor</td><td>al-Qadarif</td><td>Sudan</td></tr>
+                <tr><td>398</td><td>ANTONIO</td><td>MEEK</td><td>ANTONIO.MEEK@sakilacustomer.org</td><td>1</td><td>1190 0 Place</td><td>Bagé</td><td>Brazil</td></tr>
+                <tr><td>401</td><td>TONY</td><td>CARRANZA</td><td>TONY.CARRANZA@sakilacustomer.org</td><td>1</td><td>454 Patiala Lane</td><td>Koriyama</td><td>Japan</td></tr>
+                <tr><td>402</td><td>LUIS</td><td>YANEZ</td><td>LUIS.YANEZ@sakilacustomer.org</td><td>1</td><td>1346 Mysore Drive</td><td>Brest</td><td>France</td></tr>
+                <tr><td>411</td><td>NORMAN</td><td>CURRIER</td><td>NORMAN.CURRIER@sakilacustomer.org</td><td>1</td><td>1445 Carmen Parkway</td><td>Cianjur</td><td>Indonesia</td></tr>
+                <tr><td>412</td><td>ALLEN</td><td>BUTTERFIELD</td><td>ALLEN.BUTTERFIELD@sakilacustomer.org</td><td>1</td><td>791 Salinas Street</td><td>Hoshiarpur</td><td>India</td></tr>
+                <tr><td>413</td><td>MARVIN</td><td>YEE</td><td>MARVIN.YEE@sakilacustomer.org</td><td>1</td><td>126 Acua Parkway</td><td>Berhampore (Baharampur)</td><td>India</td></tr>
+                <tr><td>420</td><td>JACOB</td><td>LANCE</td><td>JACOB.LANCE@sakilacustomer.org</td><td>1</td><td>1866 al-Qatif Avenue</td><td>El Monte</td><td>United States</td></tr>
+                <tr><td>428</td><td>HERBERT</td><td>KRUGER</td><td>HERBERT.KRUGER@sakilacustomer.org</td><td>1</td><td>1823 Hoshiarpur Lane</td><td>Syktyvkar</td><td>Russian Federation</td></tr>
+                <tr><td>430</td><td>RAY</td><td>HOULE</td><td>RAY.HOULE@sakilacustomer.org</td><td>1</td><td>740 Udaipur Lane</td><td>Dzerzinsk</td><td>Russian Federation</td></tr>
+                <tr><td>458</td><td>LLOYD</td><td>DOWD</td><td>LLOYD.DOWD@sakilacustomer.org</td><td>1</td><td>935 Aden Boulevard</td><td>Tegal</td><td>Indonesia</td></tr>
+                <tr><td>464</td><td>JEROME</td><td>KENYON</td><td>JEROME.KENYON@sakilacustomer.org</td><td>1</td><td>1872 Toulon Loop</td><td>Rancagua</td><td>Chile</td></tr>
+                <tr><td>465</td><td>FLOYD</td><td>GANDY</td><td>FLOYD.GANDY@sakilacustomer.org</td><td>1</td><td>1088 Ibirit Place</td><td>Zapopan</td><td>Mexico</td></tr>
+                <tr><td>492</td><td>LESTER</td><td>KRAUS</td><td>LESTER.KRAUS@sakilacustomer.org</td><td>1</td><td>1013 Tabuk Boulevard</td><td>Kanchrapara</td><td>India</td></tr>
+                <tr><td>514</td><td>FRANKLIN</td><td>TROUTMAN</td><td>FRANKLIN.TROUTMAN@sakilacustomer.org</td><td>1</td><td>1778 Gijn Manor</td><td>Zaoyang</td><td>China</td></tr>
+                <tr><td>521</td><td>ROLAND</td><td>SOUTH</td><td>ROLAND.SOUTH@sakilacustomer.org</td><td>1</td><td>1993 0 Loop</td><td>Yingkou</td><td>China</td></tr>
+                <tr><td>525</td><td>ADRIAN</td><td>CLARY</td><td>ADRIAN.CLARY@sakilacustomer.org</td><td>1</td><td>1986 Sivas Place</td><td>Udine</td><td>Italy</td></tr>
+                <tr><td>527</td><td>CORY</td><td>MEEHAN</td><td>CORY.MEEHAN@sakilacustomer.org</td><td>1</td><td>556 Asuncin Way</td><td>Mogiljov</td><td>Belarus</td></tr>
+                <tr><td>530</td><td>DARRYL</td><td>ASHCRAFT</td><td>DARRYL.ASHCRAFT@sakilacustomer.org</td><td>1</td><td>166 Jinchang Street</td><td>Ezeiza</td><td>Argentina</td></tr>
+                <tr><td>543</td><td>LANCE</td><td>PEMBERTON</td><td>LANCE.PEMBERTON@sakilacustomer.org</td><td>1</td><td>454 Qinhuangdao Drive</td><td>Beni-Mellal</td><td>Morocco</td></tr>
+                <tr><td>548</td><td>ALLAN</td><td>CORNISH</td><td>ALLAN.CORNISH@sakilacustomer.org</td><td>1</td><td>947 Trshavn Place</td><td>Tarlac</td><td>Philippines</td></tr>
+                <tr><td>549</td><td>NELSON</td><td>CHRISTENSON</td><td>NELSON.CHRISTENSON@sakilacustomer.org</td><td>1</td><td>1764 Jalib al-Shuyukh Parkway</td><td>Santiago de Compostela</td><td>Spain</td></tr>
+                <tr><td>555</td><td>DWIGHT</td><td>LOMBARDI</td><td>DWIGHT.LOMBARDI@sakilacustomer.org</td><td>1</td><td>1497 Fengshan Drive</td><td>Chatsworth</td><td>South Africa</td></tr>
+                <tr><td>556</td><td>ARMANDO</td><td>GRUBER</td><td>ARMANDO.GRUBER@sakilacustomer.org</td><td>1</td><td>869 Shikarpur Way</td><td>Southport</td><td>United Kingdom</td></tr>
+                <tr><td>557</td><td>FELIX</td><td>GAFFNEY</td><td>FELIX.GAFFNEY@sakilacustomer.org</td><td>1</td><td>1059 Yuncheng Avenue</td><td>Vilnius</td><td>Lithuania</td></tr>
+                <tr><td>567</td><td>ALFREDO</td><td>MCADAMS</td><td>ALFREDO.MCADAMS@sakilacustomer.org</td><td>1</td><td>1407 Surakarta Manor</td><td>Serpuhov</td><td>Russian Federation</td></tr>
+                <tr><td>568</td><td>ALBERTO</td><td>HENNING</td><td>ALBERTO.HENNING@sakilacustomer.org</td><td>1</td><td>502 Mandi Bahauddin Parkway</td><td>Barcelona</td><td>Venezuela</td></tr>
+                <tr><td>586</td><td>KIRK</td><td>STCLAIR</td><td>KIRK.STCLAIR@sakilacustomer.org</td><td>1</td><td>1923 Stara Zagora Lane</td><td>Tsaotun</td><td>Taiwan</td></tr>
+                <tr><td>598</td><td>WADE</td><td>DELVALLE</td><td>WADE.DELVALLE@sakilacustomer.org</td><td>1</td><td>1331 Usak Boulevard</td><td>Lausanne</td><td>Switzerland</td></tr>
+                <tr><td>599</td><td>AUSTIN</td><td>CINTRON</td><td>AUSTIN.CINTRON@sakilacustomer.org</td><td>1</td><td>1325 Fukuyama Street</td><td>Tieli</td><td>China</td></tr>
+            </table>
+            <div class="stats">
+                <h3>📊 Cluster Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stats-item"><div class="stats-label">Avg Total Rentals</div><div class="stats-value">19.74</div></div>
+                    <div class="stats-item"><div class="stats-label">Avg Unique Films</div><div class="stats-value">19.60</div></div>
+                    <div class="stats-item"><div class="stats-label">Avg Total Payment</div><div class="stats-value">$74.74</div></div>
+                    <div class="stats-item"><div class="stats-label">Avg Categories</div><div class="stats-value">11.45</div></div>
+                </div>
+            </div>
+        </div>
+        <div class="cluster-section" id="cluster-4">
+            <div class="cluster-header">
+                <h2>🎯 Cluster 5 - Total Customers: 119</h2>
+            </div>
+            <table>
+                <tr><th>Customer Id</th><th>First Name</th><th>Last Name</th><th>Email</th><th>Active</th><th>Address</th><th>City</th><th>Country</th></tr>
+                <tr><td>3</td><td>LINDA</td><td>WILLIAMS</td><td>LINDA.WILLIAMS@sakilacustomer.org</td><td>1</td><td>692 Joliet Street</td><td>Athenai</td><td>Greece</td></tr>
+                <tr><td>5</td><td>ELIZABETH</td><td>BROWN</td><td>ELIZABETH.BROWN@sakilacustomer.org</td><td>1</td><td>53 Idfu Parkway</td><td>Nantou</td><td>Taiwan</td></tr>
+                <tr><td>7</td><td>MARIA</td><td>MILLER</td><td>MARIA.MILLER@sakilacustomer.org</td><td>1</td><td>900 Santiago de Compostela Parkway</td><td>Kragujevac</td><td>Yugoslavia</td></tr>
+                <tr><td>13</td><td>KAREN</td><td>JACKSON</td><td>KAREN.JACKSON@sakilacustomer.org</td><td>1</td><td>270 Amroha Parkway</td><td>Osmaniye</td><td>Turkey</td></tr>
+                <tr><td>15</td><td>HELEN</td><td>HARRIS</td><td>HELEN.HARRIS@sakilacustomer.org</td><td>1</td><td>419 Iligan Lane</td><td>Bhopal</td><td>India</td></tr>
+                <tr><td>21</td><td>MICHELLE</td><td>CLARK</td><td>MICHELLE.CLARK@sakilacustomer.org</td><td>1</td><td>262 A Corua (La Corua) Parkway</td><td>Tangail</td><td>Bangladesh</td></tr>
+                <tr><td>26</td><td>JESSICA</td><td>HALL</td><td>JESSICA.HALL@sakilacustomer.org</td><td>1</td><td>18 Duisburg Boulevard</td><td>Città del Vaticano</td><td>Holy See (Vatican City State)</td></tr>
+                <tr><td>29</td><td>ANGELA</td><td>HERNANDEZ</td><td>ANGELA.HERNANDEZ@sakilacustomer.org</td><td>1</td><td>786 Aurora Avenue</td><td>Shimonoseki</td><td>Japan</td></tr>
+                <tr><td>39</td><td>DEBRA</td><td>NELSON</td><td>DEBRA.NELSON@sakilacustomer.org</td><td>1</td><td>306 Antofagasta Place</td><td>Vila Velha</td><td>Brazil</td></tr>
+                <tr><td>46</td><td>CATHERINE</td><td>CAMPBELL</td><td>CATHERINE.CAMPBELL@sakilacustomer.org</td><td>1</td><td>46 Pjatigorsk Lane</td><td>Moscow</td><td>Russian Federation</td></tr>
+                <tr><td>49</td><td>JOYCE</td><td>EDWARDS</td><td>JOYCE.EDWARDS@sakilacustomer.org</td><td>1</td><td>725 Isesaki Place</td><td>Jedda</td><td>Saudi Arabia</td></tr>
+                <tr><td>51</td><td>ALICE</td><td>STEWART</td><td>ALICE.STEWART@sakilacustomer.org</td><td>1</td><td>1135 Izumisano Parkway</td><td>Fontana</td><td>United States</td></tr>
+                <tr><td>56</td><td>GLORIA</td><td>COOK</td><td>GLORIA.COOK@sakilacustomer.org</td><td>1</td><td>1668 Saint Louis Place</td><td>Papeete</td><td>French Polynesia</td></tr>
+                <tr><td>59</td><td>CHERYL</td><td>MURPHY</td><td>CHERYL.MURPHY@sakilacustomer.org</td><td>1</td><td>1213 Ranchi Parkway</td><td>Mysore</td><td>India</td></tr>
+                <tr><td>66</td><td>JANICE</td><td>WARD</td><td>JANICE.WARD@sakilacustomer.org</td><td>1</td><td>1150 Kimchon Manor</td><td>Malmö</td><td>Sweden</td></tr>
+                <tr><td>75</td><td>TAMMY</td><td>SANDERS</td><td>TAMMY.SANDERS@sakilacustomer.org</td><td>1</td><td>1551 Rampur Lane</td><td>Changhwa</td><td>Taiwan</td></tr>
+                <tr><td>78</td><td>LORI</td><td>WOOD</td><td>LORI.WOOD@sakilacustomer.org</td><td>1</td><td>936 Salzburg Lane</td><td>Rae Bareli</td><td>India</td></tr>
+                <tr><td>80</td><td>MARILYN</td><td>ROSS</td><td>MARILYN.ROSS@sakilacustomer.org</td><td>1</td><td>1888 Kabul Drive</td><td>Ife</td><td>Nigeria</td></tr>
+                <tr><td>84</td><td>SARA</td><td>PERRY</td><td>SARA.PERRY@sakilacustomer.org</td><td>1</td><td>125 Citt del Vaticano Boulevard</td><td>Atlixco</td><td>Mexico</td></tr>
+                <tr><td>86</td><td>JACQUELINE</td><td>LONG</td><td>JACQUELINE.LONG@sakilacustomer.org</td><td>1</td><td>870 Ashqelon Loop</td><td>Songkhla</td><td>Thailand</td></tr>
+                <tr><td>87</td><td>WANDA</td><td>PATTERSON</td><td>WANDA.PATTERSON@sakilacustomer.org</td><td>1</td><td>1740 Portoviejo Avenue</td><td>Sincelejo</td><td>Colombia</td></tr>
+                <tr><td>89</td><td>JULIA</td><td>FLORES</td><td>JULIA.FLORES@sakilacustomer.org</td><td>1</td><td>1926 El Alto Avenue</td><td>La Plata</td><td>Argentina</td></tr>
+                <tr><td>92</td><td>TINA</td><td>SIMMONS</td><td>TINA.SIMMONS@sakilacustomer.org</td><td>1</td><td>984 Effon-Alaiye Avenue</td><td>Goiânia</td><td>Brazil</td></tr>
+                <tr><td>102</td><td>CRYSTAL</td><td>FORD</td><td>CRYSTAL.FORD@sakilacustomer.org</td><td>1</td><td>659 Vaduz Drive</td><td>Ashdod</td><td>Israel</td></tr>
+                <tr><td>103</td><td>GLADYS</td><td>HAMILTON</td><td>GLADYS.HAMILTON@sakilacustomer.org</td><td>1</td><td>1177 Jelets Way</td><td>Ilorin</td><td>Nigeria</td></tr>
+                <tr><td>108</td><td>TRACY</td><td>COLE</td><td>TRACY.COLE@sakilacustomer.org</td><td>1</td><td>1002 Ahmadnagar Manor</td><td>Huixquilucan</td><td>Mexico</td></tr>
+                <tr><td>112</td><td>ROSA</td><td>REYNOLDS</td><td>ROSA.REYNOLDS@sakilacustomer.org</td><td>1</td><td>793 Cam Ranh Avenue</td><td>Lancaster</td><td>United States</td></tr>
+                <tr><td>114</td><td>GRACE</td><td>ELLIS</td><td>GRACE.ELLIS@sakilacustomer.org</td><td>1</td><td>442 Rae Bareli Place</td><td>Duisburg</td><td>Germany</td></tr>
+                <tr><td>119</td><td>SHERRY</td><td>MARSHALL</td><td>SHERRY.MARSHALL@sakilacustomer.org</td><td>1</td><td>1987 Coacalco de Berriozbal Loop</td><td>Shubra al-Khayma</td><td>Egypt</td></tr>
+                <tr><td>120</td><td>SYLVIA</td><td>ORTIZ</td><td>SYLVIA.ORTIZ@sakilacustomer.org</td><td>1</td><td>241 Mosul Lane</td><td>Dos Quebradas</td><td>Colombia</td></tr>
+                <tr><td>125</td><td>ETHEL</td><td>WEBB</td><td>ETHEL.WEBB@sakilacustomer.org</td><td>1</td><td>569 Baicheng Lane</td><td>Boksburg</td><td>South Africa</td></tr>
+                <tr><td>141</td><td>DEBBIE</td><td>REYES</td><td>DEBBIE.REYES@sakilacustomer.org</td><td>1</td><td>928 Jaffna Loop</td><td>Fukuyama</td><td>Japan</td></tr>
+                <tr><td>146</td><td>JAMIE</td><td>RICE</td><td>JAMIE.RICE@sakilacustomer.org</td><td>1</td><td>879 Newcastle Way</td><td>Sterling Heights</td><td>United States</td></tr>
+                <tr><td>154</td><td>MICHELE</td><td>GRANT</td><td>MICHELE.GRANT@sakilacustomer.org</td><td>1</td><td>798 Cianjur Avenue</td><td>Yuncheng</td><td>China</td></tr>
+                <tr><td>168</td><td>REGINA</td><td>BERRY</td><td>REGINA.BERRY@sakilacustomer.org</td><td>1</td><td>475 Atinsk Way</td><td>Jinchang</td><td>China</td></tr>
+                <tr><td>172</td><td>BERNICE</td><td>WILLIS</td><td>BERNICE.WILLIS@sakilacustomer.org</td><td>1</td><td>29 Pyongyang Loop</td><td>Batman</td><td>Turkey</td></tr>
+                <tr><td>179</td><td>DANA</td><td>HART</td><td>DANA.HART@sakilacustomer.org</td><td>1</td><td>1089 Iwatsuki Avenue</td><td>Kirovo-Tšepetsk</td><td>Russian Federation</td></tr>
+                <tr><td>187</td><td>BRITTANY</td><td>RILEY</td><td>BRITTANY.RILEY@sakilacustomer.org</td><td>1</td><td>140 Chiayi Parkway</td><td>Sumy</td><td>Ukraine</td></tr>
+                <tr><td>196</td><td>ALMA</td><td>AUSTIN</td><td>ALMA.AUSTIN@sakilacustomer.org</td><td>1</td><td>1074 Binzhou Manor</td><td>Mannheim</td><td>Germany</td></tr>
+                <tr><td>197</td><td>SUE</td><td>PETERS</td><td>SUE.PETERS@sakilacustomer.org</td><td>1</td><td>817 Bradford Loop</td><td>Changzhou</td><td>China</td></tr>
+                <tr><td>198</td><td>ELSIE</td><td>KELLEY</td><td>ELSIE.KELLEY@sakilacustomer.org</td><td>1</td><td>955 Bamenda Way</td><td>Ikerre</td><td>Nigeria</td></tr>
+                <tr><td>200</td><td>JEANNE</td><td>LAWSON</td><td>JEANNE.LAWSON@sakilacustomer.org</td><td>1</td><td>387 Mwene-Ditu Drive</td><td>Ashgabat</td><td>Turkmenistan</td></tr>
+                <tr><td>204</td><td>ROSEMARY</td><td>SCHMIDT</td><td>ROSEMARY.SCHMIDT@sakilacustomer.org</td><td>1</td><td>1215 Pyongyang Parkway</td><td>Usak</td><td>Turkey</td></tr>
+                <tr><td>207</td><td>GERTRUDE</td><td>CASTILLO</td><td>GERTRUDE.CASTILLO@sakilacustomer.org</td><td>1</td><td>850 Salala Loop</td><td>Nuuk</td><td>Greenland</td></tr>
+                <tr><td>209</td><td>TONYA</td><td>CHAPMAN</td><td>TONYA.CHAPMAN@sakilacustomer.org</td><td>1</td><td>43 Dadu Avenue</td><td>Bhilwara</td><td>India</td></tr>
+                <tr><td>210</td><td>ELLA</td><td>OLIVER</td><td>ELLA.OLIVER@sakilacustomer.org</td><td>1</td><td>751 Lima Loop</td><td>Aden</td><td>Yemen</td></tr>
+                <tr><td>211</td><td>STACEY</td><td>MONTGOMERY</td><td>STACEY.MONTGOMERY@sakilacustomer.org</td><td>1</td><td>1333 Haldia Street</td><td>Fuyu</td><td>China</td></tr>
+                <tr><td>221</td><td>BESSIE</td><td>MORRISON</td><td>BESSIE.MORRISON@sakilacustomer.org</td><td>1</td><td>1926 Gingoog Street</td><td>Syrakusa</td><td>Italy</td></tr>
+                <tr><td>237</td><td>TANYA</td><td>GILBERT</td><td>TANYA.GILBERT@sakilacustomer.org</td><td>1</td><td>647 A Corua (La Corua) Street</td><td>Naju</td><td>South Korea</td></tr>
+                <tr><td>239</td><td>MINNIE</td><td>ROMERO</td><td>MINNIE.ROMERO@sakilacustomer.org</td><td>1</td><td>47 Syktyvkar Lane</td><td>Ciomas</td><td>Indonesia</td></tr>
+                <tr><td>242</td><td>GLENDA</td><td>FRAZIER</td><td>GLENDA.FRAZIER@sakilacustomer.org</td><td>1</td><td>1246 Boksburg Parkway</td><td>Qinhuangdao</td><td>China</td></tr>
+                <tr><td>245</td><td>COURTNEY</td><td>DAY</td><td>COURTNEY.DAY@sakilacustomer.org</td><td>1</td><td>300 Junan Street</td><td>Uijongbu</td><td>South Korea</td></tr>
+                <tr><td>257</td><td>MARSHA</td><td>DOUGLAS</td><td>MARSHA.DOUGLAS@sakilacustomer.org</td><td>1</td><td>771 Yaound Manor</td><td>Beira</td><td>Mozambique</td></tr>
+                <tr><td>265</td><td>JENNIE</td><td>TERRY</td><td>JENNIE.TERRY@sakilacustomer.org</td><td>1</td><td>682 Halisahar Place</td><td>Olomouc</td><td>Czech Republic</td></tr>
+                <tr><td>267</td><td>MARGIE</td><td>WADE</td><td>MARGIE.WADE@sakilacustomer.org</td><td>1</td><td>1762 Paarl Parkway</td><td>Lengshuijiang</td><td>China</td></tr>
+                <tr><td>273</td><td>PRISCILLA</td><td>LOWE</td><td>PRISCILLA.LOWE@sakilacustomer.org</td><td>1</td><td>144 South Hill Loop</td><td>Salamanca</td><td>Mexico</td></tr>
+                <tr><td>274</td><td>NAOMI</td><td>JENNINGS</td><td>NAOMI.JENNINGS@sakilacustomer.org</td><td>1</td><td>1884 Shikarpur Avenue</td><td>Karnal</td><td>India</td></tr>
+                <tr><td>277</td><td>OLGA</td><td>JIMENEZ</td><td>OLGA.JIMENEZ@sakilacustomer.org</td><td>1</td><td>556 Baybay Manor</td><td>Ogbomosho</td><td>Nigeria</td></tr>
+                <tr><td>279</td><td>DIANNE</td><td>SHELTON</td><td>DIANNE.SHELTON@sakilacustomer.org</td><td>1</td><td>600 Bradford Street</td><td>Tabriz</td><td>Iran</td></tr>
+                <tr><td>285</td><td>MIRIAM</td><td>MCKINNEY</td><td>MIRIAM.MCKINNEY@sakilacustomer.org</td><td>1</td><td>1336 Benin City Drive</td><td>Otsu</td><td>Japan</td></tr>
+                <tr><td>289</td><td>VIOLET</td><td>RODRIQUEZ</td><td>VIOLET.RODRIQUEZ@sakilacustomer.org</td><td>1</td><td>1912 Allende Manor</td><td>Kowloon and New Kowloon</td><td>Hong Kong</td></tr>
+                <tr><td>293</td><td>MAE</td><td>FLETCHER</td><td>MAE.FLETCHER@sakilacustomer.org</td><td>1</td><td>44 Najafabad Way</td><td>Donostia-San Sebastián</td><td>Spain</td></tr>
+                <tr><td>299</td><td>JAMES</td><td>GANNON</td><td>JAMES.GANNON@sakilacustomer.org</td><td>1</td><td>1635 Kuwana Boulevard</td><td>Hiroshima</td><td>Japan</td></tr>
+                <tr><td>300</td><td>JOHN</td><td>FARNSWORTH</td><td>JOHN.FARNSWORTH@sakilacustomer.org</td><td>1</td><td>41 El Alto Parkway</td><td>Parbhani</td><td>India</td></tr>
+                <tr><td>306</td><td>CHARLES</td><td>KOWALSKI</td><td>CHARLES.KOWALSKI@sakilacustomer.org</td><td>1</td><td>715 So Bernardo do Campo Lane</td><td>Sungai Petani</td><td>Malaysia</td></tr>
+                <tr><td>307</td><td>JOSEPH</td><td>JOY</td><td>JOSEPH.JOY@sakilacustomer.org</td><td>1</td><td>1354 Siegen Street</td><td>Angra dos Reis</td><td>Brazil</td></tr>
+                <tr><td>309</td><td>CHRISTOPHER</td><td>GRECO</td><td>CHRISTOPHER.GRECO@sakilacustomer.org</td><td>1</td><td>1224 Huejutla de Reyes Boulevard</td><td>Brescia</td><td>Italy</td></tr>
+                <tr><td>314</td><td>GEORGE</td><td>LINTON</td><td>GEORGE.LINTON@sakilacustomer.org</td><td>1</td><td>1957 Yantai Lane</td><td>Sorocaba</td><td>Brazil</td></tr>
+                <tr><td>316</td><td>STEVEN</td><td>CURLEY</td><td>STEVEN.CURLEY@sakilacustomer.org</td><td>1</td><td>651 Pathankot Loop</td><td>Miraj</td><td>India</td></tr>
+                <tr><td>319</td><td>RONALD</td><td>WEINER</td><td>RONALD.WEINER@sakilacustomer.org</td><td>1</td><td>1145 Vilnius Manor</td><td>San Felipe del Progreso</td><td>Mexico</td></tr>
+                <tr><td>334</td><td>RAYMOND</td><td>MCWHORTER</td><td>RAYMOND.MCWHORTER@sakilacustomer.org</td><td>1</td><td>503 Sogamoso Loop</td><td>Sumqayit</td><td>Azerbaijan</td></tr>
+                <tr><td>337</td><td>JERRY</td><td>JORDON</td><td>JERRY.JORDON@sakilacustomer.org</td><td>1</td><td>124 al-Manama Way</td><td>Onomichi</td><td>Japan</td></tr>
+                <tr><td>342</td><td>HAROLD</td><td>MARTINO</td><td>HAROLD.MARTINO@sakilacustomer.org</td><td>1</td><td>1293 Nam Dinh Way</td><td>Boa Vista</td><td>Brazil</td></tr>
+                <tr><td>346</td><td>ARTHUR</td><td>SIMPKINS</td><td>ARTHUR.SIMPKINS@sakilacustomer.org</td><td>1</td><td>1157 Nyeri Loop</td><td>Maikop</td><td>Russian Federation</td></tr>
+                <tr><td>347</td><td>RYAN</td><td>SALISBURY</td><td>RYAN.SALISBURY@sakilacustomer.org</td><td>1</td><td>1673 Tangail Drive</td><td>Daugavpils</td><td>Latvia</td></tr>
+                <tr><td>348</td><td>ROGER</td><td>QUINTANILLA</td><td>ROGER.QUINTANILLA@sakilacustomer.org</td><td>1</td><td>381 Kabul Way</td><td>Hsichuh</td><td>Taiwan</td></tr>
+                <tr><td>349</td><td>JOE</td><td>GILLILAND</td><td>JOE.GILLILAND@sakilacustomer.org</td><td>1</td><td>953 Hodeida Street</td><td>Imus</td><td>Philippines</td></tr>
+                <tr><td>354</td><td>JUSTIN</td><td>NGO</td><td>JUSTIN.NGO@sakilacustomer.org</td><td>1</td><td>519 Nyeri Manor</td><td>Santo André</td><td>Brazil</td></tr>
+                <tr><td>360</td><td>RALPH</td><td>MADRIGAL</td><td>RALPH.MADRIGAL@sakilacustomer.org</td><td>1</td><td>1009 Zanzibar Lane</td><td>Arecibo</td><td>Puerto Rico</td></tr>
+                <tr><td>362</td><td>NICHOLAS</td><td>BARFIELD</td><td>NICHOLAS.BARFIELD@sakilacustomer.org</td><td>1</td><td>1163 London Parkway</td><td>Belém</td><td>Brazil</td></tr>
+                <tr><td>363</td><td>ROY</td><td>WHITING</td><td>ROY.WHITING@sakilacustomer.org</td><td>1</td><td>1658 Jastrzebie-Zdrj Loop</td><td>Nyeri</td><td>Kenya</td></tr>
+                <tr><td>366</td><td>BRANDON</td><td>HUEY</td><td>BRANDON.HUEY@sakilacustomer.org</td><td>1</td><td>1912 Emeishan Drive</td><td>Balikesir</td><td>Turkey</td></tr>
+                <tr><td>368</td><td>HARRY</td><td>ARCE</td><td>HARRY.ARCE@sakilacustomer.org</td><td>0</td><td>1922 Miraj Way</td><td>Najafabad</td><td>Iran</td></tr>
+                <tr><td>371</td><td>BILLY</td><td>POULIN</td><td>BILLY.POULIN@sakilacustomer.org</td><td>1</td><td>1061 Ede Avenue</td><td>Cabuyao</td><td>Philippines</td></tr>
+                <tr><td>372</td><td>STEVE</td><td>MACKENZIE</td><td>STEVE.MACKENZIE@sakilacustomer.org</td><td>1</td><td>154 Oshawa Manor</td><td>Probolinggo</td><td>Indonesia</td></tr>
+                <tr><td>373</td><td>LOUIS</td><td>LEONE</td><td>LOUIS.LEONE@sakilacustomer.org</td><td>1</td><td>1191 Tandil Drive</td><td>Tanauan</td><td>Philippines</td></tr>
+                <tr><td>380</td><td>RUSSELL</td><td>BRINSON</td><td>RUSSELL.BRINSON@sakilacustomer.org</td><td>1</td><td>1642 Charlotte Amalie Drive</td><td>Tychy</td><td>Poland</td></tr>
+                <tr><td>390</td><td>SHAWN</td><td>HEATON</td><td>SHAWN.HEATON@sakilacustomer.org</td><td>1</td><td>1337 Mit Ghamr Avenue</td><td>Nakhon Sawan</td><td>Thailand</td></tr>
+                <tr><td>404</td><td>STANLEY</td><td>SCROGGINS</td><td>STANLEY.SCROGGINS@sakilacustomer.org</td><td>1</td><td>1266 Laredo Parkway</td><td>Omiya</td><td>Japan</td></tr>
+                <tr><td>433</td><td>DON</td><td>BONE</td><td>DON.BONE@sakilacustomer.org</td><td>1</td><td>596 Huixquilucan Place</td><td>Naçala-Porto</td><td>Mozambique</td></tr>
+                <tr><td>436</td><td>TROY</td><td>QUIGLEY</td><td>TROY.QUIGLEY@sakilacustomer.org</td><td>1</td><td>983 Santa F Way</td><td>Vancouver</td><td>Canada</td></tr>
+                <tr><td>438</td><td>BARRY</td><td>LOVELACE</td><td>BARRY.LOVELACE@sakilacustomer.org</td><td>1</td><td>1836 Korla Parkway</td><td>Kitwe</td><td>Zambia</td></tr>
+                <tr><td>439</td><td>ALEXANDER</td><td>FENNELL</td><td>ALEXANDER.FENNELL@sakilacustomer.org</td><td>1</td><td>231 Kaliningrad Place</td><td>Bergamo</td><td>Italy</td></tr>
+                <tr><td>448</td><td>MIGUEL</td><td>BETANCOURT</td><td>MIGUEL.BETANCOURT@sakilacustomer.org</td><td>1</td><td>319 Springs Loop</td><td>Erlangen</td><td>Germany</td></tr>
+                <tr><td>454</td><td>ALEX</td><td>GRESHAM</td><td>ALEX.GRESHAM@sakilacustomer.org</td><td>1</td><td>251 Florencia Drive</td><td>Uruapan</td><td>Mexico</td></tr>
+                <tr><td>462</td><td>WARREN</td><td>SHERROD</td><td>WARREN.SHERROD@sakilacustomer.org</td><td>1</td><td>1621 Tongliao Avenue</td><td>Usolje-Sibirskoje</td><td>Russian Federation</td></tr>
+                <tr><td>467</td><td>ALVIN</td><td>DELOACH</td><td>ALVIN.DELOACH@sakilacustomer.org</td><td>1</td><td>1447 Chatsworth Place</td><td>Cuauhtémoc</td><td>Mexico</td></tr>
+                <tr><td>470</td><td>GORDON</td><td>ALLARD</td><td>GORDON.ALLARD@sakilacustomer.org</td><td>1</td><td>434 Ourense (Orense) Manor</td><td>Hodeida</td><td>Yemen</td></tr>
+                <tr><td>472</td><td>GREG</td><td>ROBINS</td><td>GREG.ROBINS@sakilacustomer.org</td><td>1</td><td>1786 Salinas Place</td><td>Nam Dinh</td><td>Vietnam</td></tr>
+                <tr><td>473</td><td>JORGE</td><td>OLIVARES</td><td>JORGE.OLIVARES@sakilacustomer.org</td><td>1</td><td>1078 Stara Zagora Drive</td><td>Lhokseumawe</td><td>Indonesia</td></tr>
+                <tr><td>479</td><td>ZACHARY</td><td>HITE</td><td>ZACHARY.HITE@sakilacustomer.org</td><td>1</td><td>98 Pyongyang Boulevard</td><td>Akron</td><td>United States</td></tr>
+                <tr><td>482</td><td>MAURICE</td><td>CRAWLEY</td><td>MAURICE.CRAWLEY@sakilacustomer.org</td><td>0</td><td>1785 So Bernardo do Campo Street</td><td>Coatzacoalcos</td><td>Mexico</td></tr>
+                <tr><td>484</td><td>ROBERTO</td><td>VU</td><td>ROBERTO.VU@sakilacustomer.org</td><td>1</td><td>1297 Alvorada Parkway</td><td>Yinchuan</td><td>China</td></tr>
+                <tr><td>494</td><td>RAMON</td><td>CHOATE</td><td>RAMON.CHOATE@sakilacustomer.org</td><td>1</td><td>1954 Kowloon and New Kowloon Way</td><td>Ríobamba</td><td>Ecuador</td></tr>
+                <tr><td>502</td><td>BRETT</td><td>CORNWELL</td><td>BRETT.CORNWELL@sakilacustomer.org</td><td>1</td><td>1197 Sokoto Boulevard</td><td>Siliguri (Shiliguri)</td><td>India</td></tr>
+                <tr><td>504</td><td>NATHANIEL</td><td>ADAM</td><td>NATHANIEL.ADAM@sakilacustomer.org</td><td>1</td><td>786 Matsue Way</td><td>Joliet</td><td>United States</td></tr>
+                <tr><td>506</td><td>LESLIE</td><td>SEWARD</td><td>LESLIE.SEWARD@sakilacustomer.org</td><td>1</td><td>1152 al-Qatif Lane</td><td>Pontianak</td><td>Indonesia</td></tr>
+                <tr><td>513</td><td>DUANE</td><td>TUBBS</td><td>DUANE.TUBBS@sakilacustomer.org</td><td>1</td><td>962 Tama Loop</td><td>Yangor</td><td>Nauru</td></tr>
+                <tr><td>520</td><td>MITCHELL</td><td>WESTMORELAND</td><td>MITCHELL.WESTMORELAND@sakilacustomer.org</td><td>1</td><td>617 Klerksdorp Place</td><td>Nha Trang</td><td>Vietnam</td></tr>
+                <tr><td>532</td><td>NEIL</td><td>RENNER</td><td>NEIL.RENNER@sakilacustomer.org</td><td>1</td><td>1817 Livorno Way</td><td>Cam Ranh</td><td>Vietnam</td></tr>
+                <tr><td>533</td><td>JESSIE</td><td>MILAM</td><td>JESSIE.MILAM@sakilacustomer.org</td><td>1</td><td>1332 Gaziantep Lane</td><td>Binzhou</td><td>China</td></tr>
+                <tr><td>535</td><td>JAVIER</td><td>ELROD</td><td>JAVIER.ELROD@sakilacustomer.org</td><td>1</td><td>195 Ilorin Street</td><td>NDjamna</td><td>Chad</td></tr>
+                <tr><td>550</td><td>GUY</td><td>BROWNLEE</td><td>GUY.BROWNLEE@sakilacustomer.org</td><td>1</td><td>346 Cam Ranh Avenue</td><td>Zhoushan</td><td>China</td></tr>
+                <tr><td>558</td><td>JIMMIE</td><td>EGGLESTON</td><td>JIMMIE.EGGLESTON@sakilacustomer.org</td><td>0</td><td>505 Madiun Boulevard</td><td>Wroclaw</td><td>Poland</td></tr>
+                <tr><td>560</td><td>JORDAN</td><td>ARCHULETA</td><td>JORDAN.ARCHULETA@sakilacustomer.org</td><td>1</td><td>1229 Varanasi (Benares) Manor</td><td>Avellaneda</td><td>Argentina</td></tr>
+                <tr><td>566</td><td>CASEY</td><td>MENA</td><td>CASEY.MENA@sakilacustomer.org</td><td>1</td><td>539 Hami Way</td><td>Tokat</td><td>Turkey</td></tr>
+                <tr><td>569</td><td>DAVE</td><td>GARDINER</td><td>DAVE.GARDINER@sakilacustomer.org</td><td>1</td><td>1052 Pathankot Avenue</td><td>Leshan</td><td>China</td></tr>
+                <tr><td>576</td><td>MORRIS</td><td>MCCARTER</td><td>MORRIS.MCCARTER@sakilacustomer.org</td><td>1</td><td>1568 Celaya Parkway</td><td>Fengshan</td><td>Taiwan</td></tr>
+                <tr><td>591</td><td>KENT</td><td>ARSENAULT</td><td>KENT.ARSENAULT@sakilacustomer.org</td><td>1</td><td>32 Liaocheng Way</td><td>Juiz de Fora</td><td>Brazil</td></tr>
+            </table>
+            <div class="stats">
+                <h3>📊 Cluster Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stats-item"><div class="stats-label">Avg Total Rentals</div><div class="stats-value">31.92</div></div>
+                    <div class="stats-item"><div class="stats-label">Avg Unique Films</div><div class="stats-value">31.42</div></div>
+                    <div class="stats-item"><div class="stats-label">Avg Total Payment</div><div class="stats-value">$142.63</div></div>
+                    <div class="stats-item"><div class="stats-label">Avg Categories</div><div class="stats-value">13.87</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
